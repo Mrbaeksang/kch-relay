@@ -1,0 +1,11 @@
+Use case: infographic-diagram
+Asset type: brainstorming infographic for Korean internal marketplace requirements, not a final approved specification.
+Create a polished, highly legible Korean infographic, landscape, spacious white background, navy typography, teal for confirmed behavior, amber for undecided choices. Simple apple crate and English tutoring illustrations. Exact Korean labels, no tiny dense paragraphs.
+Title: "사내 마켓 · 상품 하나, 거래는 여러 건"
+Top row confirmed model: two illustrated example cards "사과 판매" / "수량을 미리 정하지 않고 신청별 판매", "영어 과외" / "여러 사람에게 각각 서비스 제공". Both connect to "상품 1개" branching into "A의 거래", "B의 거래", "C의 거래". Caption "제안: 재고·정원 없이, 판매자가 모집 종료".
+Middle main flow labeled "확정된 흐름": "상품 보기" → "익명 문의 · 선택" → "거래 신청" → "판매자 수락 = 거래 성사" → "직접 결제 · 전달" → "거래 완료". Inquiry and application are separate; show direct bypass from product view to application. Before acceptance label "상품별 익명"; after acceptance label "해당 당사자에게만 실명 · 부서 · 직급 공개". Footnote "인사팀은 신원 열람 가능 · 플랫폼 결제 없음".
+Bottom section title "취소·완료 정책은 선택 필요". Three clearly separated comparison cards, all explicitly marked "미정":
+1 "수락 전" with "구매자 철회 / 판매자 거절" and "신원 비공개 유지" label "추천안".
+2 "수락 후 취소" compare "한쪽이 즉시 취소: 간단·빠른 종료" and "상대 동의 후 취소: 확인 단계·대기 상태 추가". Footnote "한 번 공개한 신원은 되돌릴 수 없음".
+3 "거래 완료" compare "판매자만 완료: 가장 단순" and "양쪽 완료 확인: 확인 상태·대기 처리 추가".
+Keep facts accurate: applicant identities are not disclosed to other applicants; completion does not automatically close the product; no escrow, payment icons or stock counting. Do not present unapproved cancellation or completion choices as confirmed.

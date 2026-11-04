@@ -1,0 +1,16 @@
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8080:8080"
+    environment:
+      PORT: "8080"
+      DATABASE_PATH: /data/market.db
+      WEB_DIR: /app/frontend/dist
+    volumes:
+      - relay-data:/data
+    restart: unless-stopped
+volumes:
+  relay-data:
