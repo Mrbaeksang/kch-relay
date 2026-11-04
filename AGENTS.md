@@ -22,8 +22,11 @@
 | 리뷰 | .agents/skills/kch-review/SKILL.md |
 | 커밋 | .agents/skills/kch-commit/SKILL.md |
 | PR | .agents/skills/kch-pr/SKILL.md |
+| 화면 디자인·UX·접근성 검토·다듬기 | .agents/skills/impeccable/SKILL.md |
 
 해당 작업의 스킬만 읽는다. 개인 PC 절대 경로·개인 스킬 설치를 전제하지 않는다.
+
+Impeccable 사용·설치 버전·갱신은 docs/agents/impeccable.md를 따른다. 디자인 작업도 기존 PRD·익명성·승인 정책·최소 운영비 제약을 지킨다. 스킬 설치만으로 디자인 변경이나 운영 배포를 수행하지 않는다.
 
 ## 실행·검사
 
