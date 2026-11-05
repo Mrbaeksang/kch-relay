@@ -9,11 +9,16 @@ import (
 	"strings"
 	"time"
 
+	"github.com/Mrbaeksang/kch-relay/backend/internal/httpx"
 	"github.com/go-chi/chi/v5"
 )
 
-func NewRouter(db *sql.DB, web fs.FS) http.Handler {
+func NewRouter(db *sql.DB, web fs.FS, modules ...func(chi.Router)) http.Handler {
 	router := chi.NewRouter()
+	router.Use(httpx.Stack(nil, 0))
+	for _, register := range modules {
+		register(router)
+	}
 	router.Get("/healthz", func(w http.ResponseWriter, r *http.Request) { reply(w, http.StatusOK, `{"status":"ok"}`) })
 	router.Get("/api/readyz", func(w http.ResponseWriter, r *http.Request) {
 		ctx, cancel := context.WithTimeout(r.Context(), 2*time.Second)
