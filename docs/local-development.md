@@ -9,7 +9,7 @@ Node 24, Go 1.26, Docker를 사용합니다.
 ## 빠른 수정
 
 1. npm --prefix frontend ci
-2. backend에서 go run ./cmd/server (8080)
+2. backend에서 APP_ENV=development AUTH_MODE=development go run ./cmd/server (8080)
 3. 다른 터미널에서 npm --prefix frontend run dev (5173)
 
 Vite는 /api 요청을 8080으로 프록시합니다. 프론트 빌드 결과를 Go로 확인하려면 npm --prefix frontend run build 후 backend에서 실행합니다. backend 기준 기본 DB 경로는 ./data/market.db입니다. DATABASE_PATH·PORT·WEB_DIR로 변경할 수 있고 dotenv 자동 로딩은 없습니다. 루트 .env는 Compose 보간용이며 비밀키 파일로 커밋하지 않습니다.
