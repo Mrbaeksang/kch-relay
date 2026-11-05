@@ -180,3 +180,15 @@ func DecodeJSON(r *http.Request, out any) error {
 	}
 	return nil
 }
+
+// RequireUserMiddleware protects an entire feature module before its handlers run.
+func RequireUserMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		guard := RequireUser(func(r *http.Request) (Result, error) { return Result{}, nil })
+		if _, err := guard(r); err != nil {
+			WriteError(w, r, err)
+			return
+		}
+		next.ServeHTTP(w, r)
+	})
+}

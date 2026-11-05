@@ -100,3 +100,13 @@ Config의 필드명은 AppEnv, AuthMode, Port, DatabasePath, UploadDir, WebDir, 
 - [[공통 4/6] 구글 계정 없이 테스트 관리자와 직원으로 로그인한다](https://github.com/Mrbaeksang/kch-relay/issues/7)
 - [[공통 5/6] 프론트에서 같은 로그인 상태와 API 오류를 사용한다](https://github.com/Mrbaeksang/kch-relay/issues/8)
 - [[공통 6/6] 여섯 모듈의 계약과 단일 컨테이너 연결을 자동 검증한다](https://github.com/Mrbaeksang/kch-relay/issues/9)
+
+
+## 구현 인터페이스 보완 — 2026-11-05
+
+이슈에 고정한 원문 계약은 유지하며 아래 호환 확장을 적용했다.
+
+- application.New는 선택적 Module 목록을 받고, 각 Module에 인증된 chi router와 Dependencies(DB·Config·MetaProvider)를 전달한다. 다른 업무 모듈에서 환경변수·세션 조회를 중복 구현하지 않는다.
+- Result에는 쿠키 설정을 위한 선택적 Cookies가 추가됐다. Handler가 직접 임의 응답을 쓰는 대신 어댑터가 처리한다.
+- 인증된 오류 응답도 meta를 생략할 수 있다. 프론트는 메타가 있을 때만 갱신하고401에서 세션·미확인 상태를 초기화한다.
+- 실제 구글 인증은 미구현이다. 현재 production/disabled에서는 기존 개발 세션이 남아 있어도 인증하지 않는다.
