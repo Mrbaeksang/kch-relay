@@ -4,7 +4,8 @@
 node_modules/
 frontend/dist/
 coverage/
-data/
+/data/
+/backend/data/
 *.db
 *.db-*
 *.sqlite
