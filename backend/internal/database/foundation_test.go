@@ -7,6 +7,7 @@ import (
 	"github.com/Mrbaeksang/kch-relay/backend/migrations"
 	"github.com/pressly/goose/v3"
 	"path/filepath"
+	"sync"
 	"testing"
 	"testing/fstest"
 	"time"
@@ -106,5 +107,59 @@ func TestUpgradeKeepsExistingUsers(t *testing.T) {
 	}
 	if err := EnsureDevelopmentUsers(ctx, upgraded); err != nil {
 		t.Fatal(err)
+	}
+}
+
+func TestConcurrentParticipantCreationReusesOneIdentity(t *testing.T) {
+	ctx := context.Background()
+	db, err := Open(ctx, filepath.Join(t.TempDir(), "market.db"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer db.Close()
+	if err := EnsureDevelopmentUsers(ctx, db); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := db.Exec(`INSERT INTO products(id,seller_id,title,description,unit_price,remaining_quantity,created_at,updated_at) VALUES('p','dev-admin','상품','설명',10000,10,'now','now')`); err != nil {
+		t.Fatal(err)
+	}
+	results := make(chan Participant, 20)
+	failures := make(chan error, 20)
+	var wg sync.WaitGroup
+	for i := 0; i < 20; i++ {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			var p Participant
+			err := WithTx(ctx, db, func(tx *sql.Tx) error {
+				var err error
+				p, err = EnsureParticipantTx(ctx, tx, "p", "dev-employee-a", "application", time.Now())
+				return err
+			})
+			if err != nil {
+				failures <- err
+			} else {
+				results <- p
+			}
+		}()
+	}
+	wg.Wait()
+	close(results)
+	close(failures)
+	for err := range failures {
+		t.Fatal(err)
+	}
+	first := ""
+	for p := range results {
+		if first == "" {
+			first = p.ID
+		}
+		if p.ID != first || p.ApplicantNumber.Int64 != 1 {
+			t.Fatal("duplicate identity or wrong number")
+		}
+	}
+	var next int
+	if err := db.QueryRow("SELECT next_applicant_number FROM products WHERE id='p'").Scan(&next); err != nil || next != 2 {
+		t.Fatalf("counter=%d err=%v", next, err)
 	}
 }

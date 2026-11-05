@@ -61,6 +61,8 @@ jobs:
     timeout-minutes: 20
     steps:
       - uses: actions/checkout@v7.0.1
+      - name: Test contract verifier against reference fixtures
+        run: python3 -m unittest discover -s scripts -p "test_*.py" -v
       - name: Build production image
         run: docker build -t kch-relay:ci .
       - name: Verify app and persistent volume

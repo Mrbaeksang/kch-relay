@@ -15,6 +15,7 @@ import (
 	"github.com/Mrbaeksang/kch-relay/backend/internal/config"
 	"github.com/Mrbaeksang/kch-relay/backend/internal/database"
 	"github.com/Mrbaeksang/kch-relay/backend/internal/httpapi"
+	"github.com/Mrbaeksang/kch-relay/backend/internal/httpx"
 )
 
 type Application struct {
@@ -22,7 +23,14 @@ type Application struct {
 	db   *sql.DB
 }
 
-func New(ctx context.Context, c config.Config) (*Application, error) {
+type Dependencies struct {
+	DB     *sql.DB
+	Config config.Config
+	Meta   httpx.MetaProvider
+}
+type Module func(chi.Router, Dependencies)
+
+func New(ctx context.Context, c config.Config, modules ...Module) (*Application, error) {
 	if c.AuthMode == "development" && c.AppEnv != "development" {
 		return nil, fmt.Errorf("development authentication is forbidden outside development")
 	}
@@ -46,7 +54,17 @@ func New(ctx context.Context, c config.Config) (*Application, error) {
 		return nil, err
 	}
 	handler := httpapi.NewRouter(db, os.DirFS(c.WebDir), func(r chi.Router) {
-		r.Route("/api/v1", func(api chi.Router) { api.Use(authentication.Authenticate); authentication.Register(api) })
+		r.Route("/api/v1", func(api chi.Router) {
+			api.Use(authentication.Authenticate)
+			authentication.Register(api)
+			api.Group(func(protected chi.Router) {
+				protected.Use(httpx.RequireUserMiddleware)
+				deps := Dependencies{DB: db, Config: c, Meta: func(ctx context.Context, user string) (httpx.Meta, error) { return database.UnreadMeta(ctx, db, user) }}
+				for _, register := range modules {
+					register(protected, deps)
+				}
+			})
+		})
 	})
 	return &Application{db: db, HTTP: &http.Server{Addr: ":" + c.Port, Handler: handler, ReadHeaderTimeout: 5 * time.Second, ReadTimeout: 15 * time.Second, WriteTimeout: 30 * time.Second, IdleTimeout: 60 * time.Second}}, nil
 }

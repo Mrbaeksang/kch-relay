@@ -3,7 +3,9 @@ package httpx
 import (
 	"context"
 	"log/slog"
+	"mime"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/go-chi/chi/v5"
@@ -60,6 +62,13 @@ func Stack(logger *slog.Logger, timeout time.Duration) func(http.Handler) http.H
 				}
 				logger.Info("http request", "request_id", id, "method", r.Method, "route", route, "status", sw.status, "duration_ms", time.Since(started).Milliseconds())
 			}()
+			if media, _, _ := mime.ParseMediaType(r.Header.Get("Content-Type")); strings.HasPrefix(r.URL.Path, "/api/") && media == "application/json" {
+				if r.ContentLength > MaxJSONBytes {
+					WriteError(sw, r, Invalid("요청 본문이 너무 큽니다."))
+					return
+				}
+				r.Body = http.MaxBytesReader(sw, r.Body, MaxJSONBytes)
+			}
 			next.ServeHTTP(sw, r)
 		})
 	}
