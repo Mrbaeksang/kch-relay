@@ -20,6 +20,12 @@ type Actor struct {
 	Status     string `json:"status"`
 }
 type actorKey struct{}
+type authErrorKey struct{}
+
+func WithAuthError(ctx context.Context, err error) context.Context {
+	return context.WithValue(ctx, authErrorKey{}, err)
+}
+
 type requestIDKey struct{}
 
 func WithActor(ctx context.Context, a Actor) context.Context {
@@ -44,8 +50,9 @@ type Meta struct {
 }
 type MetaProvider func(context.Context, string) (Meta, error)
 type Result struct {
-	Status int
-	Data   any
+	Status  int
+	Data    any
+	Cookies []*http.Cookie
 }
 type Handler func(*http.Request) (Result, error)
 type AppError struct {
@@ -95,6 +102,9 @@ func Adapt(next Handler, meta MetaProvider) http.HandlerFunc {
 			return
 		}
 		headers(w)
+		for _, cookie := range result.Cookies {
+			http.SetCookie(w, cookie)
+		}
 		w.WriteHeader(status)
 		_, _ = w.Write(body)
 	}
@@ -131,6 +141,9 @@ func RequireUser(next Handler) Handler {
 	return func(r *http.Request) (Result, error) {
 		a, ok := CurrentUser(r.Context())
 		if !ok {
+			if failure, exists := r.Context().Value(authErrorKey{}).(error); exists {
+				return Result{}, failure
+			}
 			return Result{}, Error(401, "UNAUTHENTICATED", "로그인이 필요합니다.")
 		}
 		if a.Status != "ACTIVE" {
