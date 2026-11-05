@@ -42,6 +42,24 @@
 
 ## 2. 인증·가입
 
+2026-11-05 공통 기반: 현재 구글 로그인은 후속 작업이다. development 전용 실제 세션 로그인과 공통 사용자 계약을 먼저 제공한다.
+
+| Method | 경로 | 현재 구현 계약 |
+|---|---|---|
+| GET | `/auth/config` | authMode·developmentLogin·accounts(key,label,role). disabled는 빈 accounts |
+| POST | `/auth/development-login` | development에서만 accountKey 입력, 실제 세션 쿠키와 data.user·data.csrfToken 반환 |
+| GET | `/auth/me` | 검증된 본인 user·csrfToken, 미인증401·정지403 |
+| POST | `/auth/logout` | Origin·X-CSRF-Token 검증 후 세션 회수·쿠키 제거 |
+| GET | `/access` | 로그인 권한 확인용 allowed·role |
+| GET | `/admin/access` | 관리자 권한 확인용 allowed·role |
+
+user는 id·realName·department·jobLevel·role·status만 포함한다. 쿠키 이름 relay_session, Path=/api, HttpOnly, SameSite=Lax다. 개발 HTTP에서만 Secure=false이며 운영에는 개발 로그인 경로가 없다. 세션은 고정8시간, 원본 토큰 대신 SHA-256 해시만 저장한다. refresh API·실제 구글 연동은 아직 제공하지 않는다.
+
+성공 응답은 data·인증된 요청의 meta, 오류는 error(code,message,선택details,requestId)다. 요청 ID는 X-Request-ID 헤더에도 제공한다. 제한시간 초과는504 REQUEST_TIMEOUT이다. 메타 조회 실패 시 이미 commit한 작업을 rollback했다고 가정하지 않는다.
+
+아래 구글·가입 경로는 향후 구현할 원래 초안이며 현재 제공하는 API와 구분한다.
+
+
 | Method | 경로 | 요청·결과 |
 |---|---|---|
 | GET | `/auth/google/start` | 구글 인증으로 리다이렉트 |

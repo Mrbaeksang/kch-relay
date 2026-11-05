@@ -7,6 +7,10 @@ services:
       - "8080:8080"
     environment:
       PORT: "8080"
+      APP_ENV: development
+      AUTH_MODE: development
+      APP_ORIGIN: http://localhost:8080
+      UPLOAD_DIR: /data/uploads
       DATABASE_PATH: /data/market.db
       WEB_DIR: /app/frontend/dist
     volumes:

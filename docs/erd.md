@@ -1,6 +1,6 @@
 # ERD 초안
 
-작성일: 2026-11-04. [PRD](prd.md)의 논리 모델. 관계형 DB를 가정하지만 DB·프레임워크는 미선정이다. ‘제안’은 미확정 선택이다.
+작성일: 2026-11-04. [PRD](prd.md)의 논리 모델. SQLite·Go를 사용한다. ‘제안’은 미확정 선택이다.
 
 ## 관계
 
@@ -115,7 +115,7 @@ erDiagram
 
 | 필드 | 의미·제약 |
 |---|---|
-| google_subject | 검증된 구글 계정 식별자, 필수·고유 |
+| google_subject | 검증된 구글 계정 식별자, nullable·고유. 개발 계정은 NULL |
 | email | 검증된 사내 메일, 필수·고유. 상대에게 공개하지 않음 |
 | real_name | 가입자 직접 입력, 필수 |
 | department, job_level | 필수 enum. 회사가 실제 목록 정의 |
@@ -177,7 +177,7 @@ erDiagram
 
 - notifications: recipient_id·deal_id FK, type은 `APPLICATION_REJECTED`. `(deal_id, type)` 고유로 중복 알림 방지. read_at nullable. 앱 내 알림함을 사용한다.
 - 알림은 현재 상품·거래를 참조하며 상품 제목 스냅샷은 저장하지 않는다.
-- sessions: 서버 세션 제안. 원본 토큰 대신 해시 저장, 만료·회수 시각 유지. 구글 계정 정지 감지·로컬 세션 회수 방식은 미정이다.
+- sessions: 고정 만료 서버 세션. csrf_token·created_at을 추가하고 원본 세션 토큰 대신 SHA-256 해시만 저장한다. 원본 토큰 대신 해시 저장, 만료·회수 시각 유지. 구글 계정 정지 감지·로컬 세션 회수 방식은 미정이다.
 
 ## 트랜잭션과 경합
 
