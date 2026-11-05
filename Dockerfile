@@ -17,7 +17,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends ca-certificates
 WORKDIR /app
 COPY --from=backend /out/server ./server
 COPY --from=frontend /src/frontend/dist ./frontend/dist
-ENV PORT=8080 DATABASE_PATH=/data/market.db WEB_DIR=/app/frontend/dist
+ENV APP_ENV=production AUTH_MODE=disabled PORT=8080 DATABASE_PATH=/data/market.db UPLOAD_DIR=/data/uploads WEB_DIR=/app/frontend/dist
 COPY scripts/entrypoint.sh /usr/local/bin/relay-entrypoint
 RUN chmod 755 /usr/local/bin/relay-entrypoint
 ENTRYPOINT ["relay-entrypoint"]
