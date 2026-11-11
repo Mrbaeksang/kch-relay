@@ -166,6 +166,8 @@ erDiagram
 - read_at: 수신자가 읽음 처리한 시각, nullable. 발신자는 변경 불가.
 - created_at: 필수. 수정·삭제 기능은 초안에 없다.
 - 안 읽은 쪽지는 recipient_id와 read_at으로 조회한다. users에 중복 카운터를 두지 않는 것을 제안한다.
+- idempotency_key: 발송 재시도 키, nullable(migration `00003`, #19). `(participant_id, sender_id, idempotency_key)` 부분 고유 인덱스. 보관 기간은 쪽지를 따른다([결정 기록](decisions/anonymous-messages.md)).
+- created_at은 대화 안에서 엄격히 증가하도록 저장한다(읽음 처리 경계 보장).
 
 ### images / reviews
 
@@ -195,7 +197,7 @@ erDiagram
 - products: `(approval_status, deleted_at, created_at)`, `(seller_id, created_at)`.
 - participants: 상품·구매자 고유, 상품별 별칭 번호 고유.
 - deals: `(participant_id, status)` 및 진행 중 거래 고유 제약.
-- messages: `(participant_id, created_at, id)`, `(recipient_id, read_at)`.
+- messages: `(participant_id, created_at, id)`, `(recipient_id, read_at)`, `(participant_id, sender_id, idempotency_key)` 부분 고유.
 - notifications: `(recipient_id, read_at, created_at)`, 거래·유형 고유.
 - reviews: `(product_id, created_at)`.
 - 익명 DTO에 상대의 전역 사용자 ID·구글 ID·이메일을 포함하지 않는다. 신원 공개는 거래 관계 또는 HR_ADMIN 권한을 매번 확인한다. UUID를 아는 것만으로 접근할 수 없다.
