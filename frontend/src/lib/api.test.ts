@@ -21,3 +21,15 @@ test('401은 로그인 상태를 정리하고 403은 권한 오류만 전달한�
   await expect(api('/expired')).rejects.toMatchObject({ status: 401 })
   expect(onUnauthorized).toHaveBeenCalledTimes(1)
 })
+
+test('사진 업로드는 FormData를 그대로 보내고 브라우저가 multipart 경계를 정하게 한다', async () => {
+  const transport = vi.fn(async () => Response.json({ data: { id: 'img', url: '/api/v1/images/img' } }, { status: 201 }))
+  const api = createAPI({ getCSRF: () => 'csrf', onMeta: vi.fn(), onUnauthorized: vi.fn() }, transport)
+  const form = new FormData()
+  form.append('file', new Blob(['x'], { type: 'image/jpeg' }), 'photo.jpg')
+  await api('/images', { method: 'POST', body: form })
+  const [, options] = transport.mock.calls[0] as unknown as [string, RequestInit]
+  expect(options.body).toBe(form)
+  expect(new Headers(options.headers).get('Content-Type')).toBeNull()
+  expect(new Headers(options.headers).get('X-CSRF-Token')).toBe('csrf')
+})
