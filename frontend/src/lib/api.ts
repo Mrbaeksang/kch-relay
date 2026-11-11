@@ -10,10 +10,11 @@ export function createAPI(hooks: Hooks, transport: typeof fetch = fetch): API {
     if (!path.startsWith('/') || path.startsWith('//')) throw new Error('API 경로가 올바르지 않습니다.')
     const method = options.method ?? 'GET'
     const headers = new Headers({ Accept: 'application/json' })
-    if (options.body !== undefined) headers.set('Content-Type', 'application/json')
+    const isForm = options.body instanceof FormData
+    if (options.body !== undefined && !isForm) headers.set('Content-Type', 'application/json')
     const csrf = hooks.getCSRF()
     if (!['GET', 'HEAD', 'OPTIONS'].includes(method.toUpperCase()) && csrf) headers.set('X-CSRF-Token', csrf)
-    const response = await transport(`/api/v1${path}`, { method, headers, credentials: 'same-origin', body: options.body === undefined ? undefined : JSON.stringify(options.body), signal: options.signal })
+    const response = await transport(`/api/v1${path}`, { method, headers, credentials: 'same-origin', body: options.body === undefined ? undefined : isForm ? options.body as FormData : JSON.stringify(options.body), signal: options.signal })
     if (options.signal?.aborted) throw new DOMException('Aborted', 'AbortError')
     if (response.status === 401) hooks.onUnauthorized()
     let envelope
