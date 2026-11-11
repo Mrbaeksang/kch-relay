@@ -44,7 +44,7 @@ export function DealActions({ deal, onChange }: { deal: Deal; onChange: (deal: D
       <label>신청 수량 <Input type="number" min={1} step={1} required value={quantity} onChange={e => setQuantity(e.target.value)} /></label>
       <Button type="submit" disabled={busy}>수량 변경</Button>
     </form> : null}
-    {buttons.map(action => <Button key={action} type="button" disabled={busy} onClick={() => act(action)}>{actionLabels[action]}</Button>)}
+    {buttons.map(action => <Button variant={action === "reject" ? "destructive" : action === "withdraw" ? "outline" : "default"} key={action} type="button" disabled={busy} onClick={() => act(action)}>{actionLabels[action]}</Button>)}
     {error ? <p role="alert">{error}</p> : null}
   </div>
 }
@@ -61,7 +61,7 @@ export function DealDetail({ dealId }: { dealId: string }) {
   if (error) return <p role="alert">{error}</p>
   if (!deal) return <p>거래를 불러오고 있습니다.</p>
   return <section aria-labelledby="deal-title" className="deal-detail">
-    <h2 id="deal-title">{deal.product.title}</h2>
+    <h1 id="deal-title">{deal.product.title}</h1>
     {deal.product.hidden ? <p>판매자가 숨긴 상품입니다. 거래 기록은 그대로 확인할 수 있습니다.</p> : null}
     <DealSummary deal={deal} />
     <DealActions deal={deal} onChange={setDeal} />
@@ -90,7 +90,7 @@ export function MyDeals() {
   }
   useEffect(() => { void load();return()=>{requestID.current++} }, [status])
   return <section aria-labelledby="my-deals" className="my-deals">
-    <h2 id="my-deals">내 신청·거래</h2>
+    <h1 id="my-deals">내 신청·거래</h1>
     <label>상태 <select value={status} onChange={e => setStatus(e.target.value as DealStatus | '')}>
       <option value="">전체</option>
       {Object.entries(statusLabels).map(([value, label]) => <option key={value} value={value}>{label}</option>)}

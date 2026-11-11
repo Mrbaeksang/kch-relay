@@ -27,9 +27,9 @@ export function AdminReview() {
   useEffect(() => { void load(status) }, [load, status])
 
   return <section aria-labelledby="review-title" className="products-page">
-    <h2 id="review-title">상품 심사</h2>
+    <h1 id="review-title">상품 심사</h1>
     <div role="group" aria-label="심사 상태">
-      {(['PENDING', 'REJECTED', 'APPROVED'] as const).map(value => <Button key={value} type="button" aria-pressed={status === value} onClick={() => { setStatus(value); setSelected(null) }}>{statusLabel[value]}</Button>)}
+      {(['PENDING', 'REJECTED', 'APPROVED'] as const).map(value => <Button variant={status === value ? "secondary" : "ghost"} key={value} type="button" aria-pressed={status === value} onClick={() => { setStatus(value); setSelected(null) }}>{statusLabel[value]}</Button>)}
     </div>
     {error ? <p role="alert">{error}</p> : null}
     {loading ? <p role="status">심사 목록을 불러오고 있습니다.</p> : null}
@@ -91,7 +91,7 @@ function ReviewDetail({ id, onDecided }: { id: string; onDecided: () => void }) 
     {detail.approvalStatus === 'PENDING' ? <form onSubmit={event => void decide('reject', event)}>
       <Button type="button" disabled={busy} onClick={() => void decide('approve')}>승인</Button>
       <label>반려 사유 <Textarea value={reason} rows={3} maxLength={limits?.maxReasonLength} onChange={event => setReason(event.target.value)} /></label>
-      <Button type="submit" disabled={busy}>반려</Button>
+      <Button variant="destructive" type="submit" disabled={busy}>반려</Button>
     </form> : null}
     {error ? <p role="alert">{error}</p> : null}
     <h4>참여자 신원</h4>

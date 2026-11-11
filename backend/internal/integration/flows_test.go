@@ -21,6 +21,7 @@ import (
 	"github.com/Mrbaeksang/kch-relay/backend/internal/config"
 	"github.com/Mrbaeksang/kch-relay/backend/internal/notifications"
 	"github.com/Mrbaeksang/kch-relay/backend/internal/product"
+	"github.com/Mrbaeksang/kch-relay/backend/internal/statistics"
 	"github.com/Mrbaeksang/kch-relay/backend/internal/transactions"
 )
 
@@ -35,7 +36,7 @@ func setup(t *testing.T) (*client, *client, *client) {
 	t.Helper()
 	dir := t.TempDir()
 	c := config.Config{AppEnv: "development", AuthMode: "development", AppOrigin: "http://relay.test", SessionTTL: 8 * time.Hour, DatabasePath: filepath.Join(dir, "market.db"), UploadDir: filepath.Join(dir, "uploads"), WebDir: dir}
-	app, err := application.New(context.Background(), c, notifications.Module(nil), catalog.Register, product.Module, transactions.Module(func(ctx context.Context, tx *sql.Tx, p, s string, ids []string, _ time.Time) error {
+	app, err := application.New(context.Background(), c, statistics.Register, notifications.Module(nil), catalog.Register, product.Module, transactions.Module(func(ctx context.Context, tx *sql.Tx, p, s string, ids []string, _ time.Time) error {
 		return product.AttachImagesTx(ctx, tx, p, s, ids)
 	}))
 	if err != nil {
@@ -177,5 +178,27 @@ func TestHiddenProductRejectionReachesNotificationInbox(t *testing.T) {
 	record := b.do(200, "GET", "/deals/"+d, nil)
 	if record["status"] != "REJECTED" || record["product"].(map[string]any)["hidden"] != true {
 		t.Fatal(record)
+	}
+}
+
+func TestSellerCompletionReachesKoreanPeriodStatistics(t *testing.T) {
+	a, b, admin := setup(t)
+	p := a.do(201, "POST", "/products", map[string]any{"title": "통계용 가상 상품", "description": "통합 테스트", "unitPrice": 150000000, "quantity": 3})["id"].(string)
+	admin.do(200, "POST", "/admin/products/"+p+"/approve", map[string]any{})
+	d := b.do(201, "POST", "/products/"+p+"/deals", map[string]int{"quantity": 2})["id"].(string)
+	a.do(200, "POST", "/deals/"+d+"/accept", nil)
+	a.do(200, "PATCH", "/products/"+p, map[string]int{"unitPrice": 0})
+	complete := a.do(200, "POST", "/deals/"+d+"/complete", nil)
+	stamp, err := time.Parse(time.RFC3339Nano, complete["completedAt"].(string))
+	if err != nil {
+		t.Fatal(err)
+	}
+	day := stamp.In(time.FixedZone("Asia/Seoul", 9*60*60)).Format("2006-01-02")
+	a.do(200, "DELETE", "/products/"+p, nil)
+	path := "/admin/statistics/completed-deals?from=" + day + "&to=" + day
+	b.do(403, "GET", path, nil)
+	totals := admin.do(200, "GET", path, nil)
+	if totals["completedDealCount"] != float64(1) || totals["totalCompletedAmount"] != float64(300000000) {
+		t.Fatal(totals)
 	}
 }

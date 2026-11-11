@@ -90,7 +90,7 @@ export function NotificationInbox({ navigate = path => window.location.assign(pa
   }
 
   return <section aria-labelledby="notification-inbox-title" className="notification-inbox">
-    <h2 id="notification-inbox-title">알림함</h2>
+    <h1 id="notification-inbox-title">알림함</h1>
     <p className="notification-hint">알림을 누르면 읽음으로 바뀌고 해당 거래로 이동해요. 상품이 숨겨져도 내 거래 내역에서 거절된 신청을 확인할 수 있어요.</p>
     {status === 'loading' ? <p aria-live="polite">알림을 불러오고 있어요.</p> : null}
     {status === 'error' ? <div role="alert">
