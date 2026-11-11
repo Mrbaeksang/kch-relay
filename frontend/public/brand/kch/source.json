@@ -1,0 +1,39 @@
+{
+  "organization": "KCH",
+  "sourceUrl": "https://www.kchglobal.com/?p=15",
+  "retrievedOn": "2026-11-11",
+  "sourceState": "HTTP 503 maintenance page; official inline SVG with aria-label KCH",
+  "asset": "/brand/kch/kch-logo-official.svg",
+  "sha256": "9bfbbbbed3b4ff9110944db00125f5796d06e6e13547340f932b98baab3919b2",
+  "observedFill": "#20252b",
+  "colorStatus": "Observed SVG fill only; not a confirmed corporate palette",
+  "rights": "KCH corporate identity; not covered by the project code license",
+  "legacyCiUrl": "https://www.kchglobal.com/?p=15",
+  "legacyCiDownloadStatus": "Unavailable during maintenance; not downloaded",
+  "preferredAsset": "/brand/kch/kch-logo.svg",
+  "guide": {
+    "file": "docs/brand/kch-ci-guidelines.pdf",
+    "originalName": "KCH Group CI Guidelines(Outlined)_250227.pdf",
+    "sha256": "a5b824f35313e93fdf2479a4315b7b14e206a2a711dc9df2907d83faecc3dcec",
+    "logoSource": "PDF page 3 (printed page 1), four original vector paths; web fills follow PDF page 20 RGB/HEX values",
+    "assetSha256": "6d201df44d2d564e579bda06e8cb0ac55fa03271bf2fe386bebff6e9a1f9bc62",
+    "colors": {
+      "skyBlue": "#69B3E3",
+      "oceanBlue": "#286FB7",
+      "gray": "#BCBEC0"
+    },
+    "typographyPages": "PDF pages 17–19 (printed 15–17)",
+    "minimumLogoHeight": "3mm in print, PDF page 3; no invented pixel conversion",
+    "status": "User-supplied official guideline supersedes maintenance page logo",
+    "originalPagesInExcerpt": [
+      3,
+      17,
+      18,
+      19,
+      20,
+      21
+    ],
+    "excerptSha256": "7ada9398751d9886b6fa0cc94ec687f134ee2a4519db6ffbdedafc962f92617a",
+    "scope": "Logo, fonts, colors and incorrect-usage pages only; business-card examples excluded"
+  }
+}

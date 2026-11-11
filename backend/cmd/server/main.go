@@ -2,13 +2,17 @@ package main
 
 import (
 	"context"
+	"database/sql"
 	"log/slog"
 	"os"
 	"os/signal"
 	"syscall"
+	"time"
 
 	"github.com/Mrbaeksang/kch-relay/backend/internal/application"
+	"github.com/Mrbaeksang/kch-relay/backend/internal/catalog"
 	"github.com/Mrbaeksang/kch-relay/backend/internal/config"
+	"github.com/Mrbaeksang/kch-relay/backend/internal/product"
 	"github.com/Mrbaeksang/kch-relay/backend/internal/transactions"
 )
 
@@ -25,8 +29,9 @@ func run() error {
 	}
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()
-	// Photo changes are refused until the product registration feature supplies AttachImagesTx.
-	app, err := application.New(ctx, c, transactions.Module(nil))
+	app, err := application.New(ctx, c, catalog.Register, product.Module, transactions.Module(func(ctx context.Context, tx *sql.Tx, productID, sellerID string, ids []string, _ time.Time) error {
+		return product.AttachImagesTx(ctx, tx, productID, sellerID, ids)
+	}))
 	if err != nil {
 		return err
 	}

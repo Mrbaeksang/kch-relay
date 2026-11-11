@@ -127,9 +127,47 @@ email·googleSubject는 인증 결과에서 얻는다. role·status는 서버 �
 
 상품 seller에는 신원을 넣지 않는다. 성사 후 신원은 거래·대화 관계로 검사하여 반환한다. canApply는 본인 상품·진행 거래·공개·모집·수량 조건을 반영한다.
 
-### 이미지 업로드 — 제안
+### 장터 조회 구현 계약 (#16)
 
-`POST /images` multipart 파일 → 201 `{id, url}`. 본인 소유의 검증된 미연결 imageId를 상품에 연결한다. 교체 시 기존 이미지는 연결을 해제하고, 보존·삭제 시점은 추후 정한다. 파일명·EXIF·URL에 신원이 노출되지 않게 처리한다. 사진 크기·개수·형식 제한은 미정이다.
+- 목록과 상세는 기존 공통 세션·활성 직원 검사·응답 meta를 사용한다. 목록 DTO도 위 공개 상품 응답과 같은 필드를 가지며 판매자 신원을 포함하지 않는다.
+- q는 앞뒤 공백을 제거한 최대 200자 검색어다. 제목·본문의 부분 문자열을 검색하고 `%`, `_`, 역슬래시는 와일드카드가 아닌 문자로 취급한다. limit 기본20·최대100, created_at DESC·id DESC 커서 정렬이다.
+- 공개 목록에는 모집 종료·수량 소진 상품도 포함한다. 판매자도 목록에서는 자기 비공개 상품을 볼 수 없으며, 단건 상세에서만 자기 대기·반려·숨김 상품을 조회한다. 다른 사용자와 HR의 일반 장터 상세 경로에서는 비공개·숨김·없는 상품 모두404다. HR 전용 조회는 #17 범위다.
+- canApply는 현재 공개·비삭제·모집 중·잔여 수량 양수·다른 판매자 여부를 검사한다. 진행 중 신청의 중복 제한은 기존 제안 상태이며 #18에서 정책을 확정하면 조회 판정과 함께 연결해야 한다. 현재값을 거래 수락/신청 권한의 대체 검사로 사용하지 않는다.
+- images는 sortOrder·id 순이며 `{id,url,sortOrder}`만 제공한다. url은 `/api/v1/images/{imageId}`이고 업로더·파일명·storage_key는 반환하지 않는다. 이미지 업로드·파일 응답과 사진 권한은 #17에서 구현한다.
+- 구글 인증·상품 등록/승인·문의/신청 버튼의 실제 처리는 별도 티켓이다. 아직 없는 기능은 화면에서 준비 중으로 안내한다.
+
+### 이미지 업로드 — 2026-11-11 구현 (#17)
+
+- `POST /images` multipart `file` 한 장 → 201 `{id, url}`. url은 `/api/v1/images/{id}`.
+- JPEG·PNG만, 장당 5MB 이하, 가로·세로 8,000px·총 400만 화소 이하(디코딩 메모리 제한, 서버 전체에서 한 장씩 처리). 서버가 디코딩 후 다시 인코딩해 EXIF·주석·이미지가 아닌 내용을 제거한다. 저장 파일명은 서버 난수이며 원본 파일명·사용자 입력 경로를 쓰지 않는다. 화면은 업로드 전 회전 보정·축소(최대 2000px JPEG)를 한다.
+- 등록 전 사진은 업로더 소유다. 상품에 연결하지 않은 사진은 사용자당 20장까지 보관한다(초과 시 409). 미연결 사진의 정리 시점은 미정이다.
+- 파일은 임시 파일로 쓰고 이름을 바꾼 뒤 DB에 기록한다. DB 기록이 실패하면 파일을 지운다.
+- `GET /images/{id}`: 미연결 사진은 업로더만, 연결 사진은 승인·비삭제 상품이면 로그인 사용자 모두, 그 외에는 판매자·HR_ADMIN만 조회한다. 나머지는 404. `Cache-Control: private, no-cache`와 ETag를 사용해 같은 브라우저의 다른 계정이 캐시 사본을 받지 못하게 한다.
+- 상품 사진 연결은 공용 `product.AttachImagesTx(ctx, tx, productID, sellerID, imageIDs)`를 사용한다. 같은 tx에서 개수·중복·소유권을 검증하고 기존 연결을 교체하며 자체 commit하지 않는다. 오류는 VALIDATION_ERROR다. 승인 후 수정(#18)도 이 함수를 사용한다.
+
+### 입력 한도 — 2026-11-11 구현 (#17)
+
+`GET /product-limits`가 아래 값을 제공하며 화면은 이 값을 사용한다. 다른 화면에서 같은 숫자를 하드코딩하지 않는다.
+
+| 항목 | 한도 |
+|---|---|
+| 제목 | 앞뒤 공백 제거 후 1~100자 |
+| 본문 | 앞뒤 공백 제거 후 1~5,000자 |
+| 단가 | 0~100억 원 정수 (0원 = 나눔, 1억 원 이상 지원) |
+| 수량 | 1~10,000 정수 |
+| 사진 | 상품당 0~5장 |
+| 반려 사유 | 1~500자 |
+
+단가×수량 최댓값은 10^14로 브라우저 정수 계산 범위 안이다.
+
+### 등록·심사 — 2026-11-11 구현 (#17)
+
+- `POST /products` 응답과 `GET /me/products` 항목은 id·title·description·unitPrice·remainingQuantity·approvalStatus·rejectionReason(반려 상태일 때 최근 사유)·recruitmentClosed·images·createdAt·updatedAt. 작성자 신원은 포함하지 않는다.
+- `POST /products/{id}/submit-review`는 등록과 같은 본문(title·description·unitPrice·quantity·imageIds)을 받아 반려 상품의 수정과 재심사 요청을 한 번에 처리한다. REJECTED만 허용(그 외 409), 본인 상품이 아니면 404.
+- `GET /admin/products?approvalStatus=`는 오래된 순서이며 작성자 realName·department·jobLevel을 포함한다. 잘못된 상태 값은 400 INVALID_ENUM_VALUE.
+- `GET /admin/products/{id}`는 본문·사진·심사 이력(decision·reason·reviewer 실명·createdAt)을 포함한다.
+- 승인·반려는 PENDING에서만 가능하고 아니면 409 INVALID_STATE. 상태 변경과 심사 이력 기록은 한 트랜잭션이다.
+- `GET /admin/products/{id}/participants`는 label(문의자 A·익명 1)·inquirerNumber·applicantNumber·실명·부서·직급·createdAt. 이메일·쪽지 내용은 제공하지 않는다.
 
 ## 4. 거래 신청·수락·완료
 

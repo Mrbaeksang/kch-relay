@@ -19,7 +19,11 @@ export function SessionProvider({ children }: { children: ReactNode }) {
   const api = useMemo(() => createAPI({
     getCSRF: () => csrf.current,
     onMeta: setMeta,
-    onUnauthorized: () => { csrf.current = null; setState({ status: 'anonymous' }); setMeta(noUnread) },
+    onUnauthorized: () => {
+      const hadSession = csrf.current !== null
+      csrf.current = null; setState({ status: 'anonymous' }); setMeta(noUnread)
+      if (hadSession) setError('로그인이 만료되었습니다. 다시 로그인해 주세요.')
+    },
   }), [])
   function accept(data: SessionData) { csrf.current = data.csrfToken; setState({ status: 'authenticated', ...data }) }
   function describe(error: unknown) { return error instanceof APIError ? error.message : '연결을 확인하고 다시 시도해 주세요.' }
