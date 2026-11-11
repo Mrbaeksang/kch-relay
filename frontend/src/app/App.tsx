@@ -20,6 +20,7 @@ export function App() {
 
 function Page() {
   const session = useSession()
+  const [navigationOpen,setNavigationOpen]=useState(false)
   if (import.meta.env.DEV && window.location.pathname === '/design-system')
     return <DesignSystem />
   const authenticated = session.state.status === 'authenticated'
@@ -41,9 +42,12 @@ function Page() {
           <span className="wordmark">Relay</span>
         </a>
         {authenticated ? (
+          <>
+          <Button type="button" variant="outline" className="md:hidden" aria-controls="main-navigation" aria-expanded={navigationOpen} onClick={()=>setNavigationOpen(open=>!open)}>메뉴</Button>
           <nav
+            id="main-navigation"
             aria-label="주 메뉴"
-            className="flex flex-wrap items-center gap-2"
+            className={`${navigationOpen ? "flex" : "hidden"} w-full flex-wrap items-center gap-2 md:flex md:w-auto`}
           >
             <Button variant="ghost" asChild>
               <a href="/market">장터</a>
@@ -66,6 +70,7 @@ function Page() {
               로그아웃
             </Button>
           {session.state.status === "authenticated" && session.state.user.role === "HR_ADMIN" ? <Button variant="ghost" asChild><a href="/admin/statistics">거래 통계</a></Button>:null}</nav>
+          </>
         ) : (
           <Badge variant="secondary">구성원 전용</Badge>
         )}

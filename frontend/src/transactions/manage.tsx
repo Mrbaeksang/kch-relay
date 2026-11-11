@@ -40,7 +40,7 @@ export function ProductManage({ productId }: { productId: string }) {
       <QuantityForm product={product} busy={busy} onSubmit={remainingQuantity => change(() => api(`/products/${productId}/quantity`, { method: 'PATCH', body: { remainingQuantity } }), '잔여 수량을 바꿨습니다. 대기 중인 신청은 그대로 유지됩니다.')} />
       <div className="product-controls">
         <Button type="button" disabled={busy} onClick={() => void change(() => api(`/products/${productId}/${closed ? 'reopen' : 'close'}`, { method: 'POST' }), closed ? '모집을 다시 시작했습니다.' : '모집을 종료했습니다. 기존 신청과 거래는 유지됩니다.')}>{closed ? '모집 재개' : '모집 종료'}</Button>
-        <Button type="button" disabled={busy} onClick={() => {
+        <Button variant="destructive" type="button" disabled={busy} onClick={() => {
           if (window.confirm('상품을 숨기면 장터에서 사라지고 대기 중인 신청은 모두 거절됩니다. 숨길까요?')) void change(() => api(`/products/${productId}`, { method: 'DELETE' }), '상품을 숨겼습니다.')
         }}>상품 숨기기</Button>
       </div>

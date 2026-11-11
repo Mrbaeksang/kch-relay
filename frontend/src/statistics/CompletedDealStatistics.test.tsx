@@ -43,6 +43,7 @@ test('관리자는 화면을 열면 한국 날짜 기준 이번 달 완료 거�
   const calls = serve('HR_ADMIN', url => new Promise(resolve => { release = () => resolve(totals(3, 51000)(url) as Response) }))
   render(<App />)
   expect(await screen.findByText('불러오는 중입니다.')).toBeTruthy()
+  await waitFor(() => expect(release).toBeTypeOf('function'))
   release()
   expect(await screen.findByText('51,000원')).toBeTruthy()
   expect(screen.getByText('3건')).toBeTruthy()

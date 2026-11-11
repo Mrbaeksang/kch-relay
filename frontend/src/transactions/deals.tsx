@@ -44,7 +44,7 @@ export function DealActions({ deal, onChange }: { deal: Deal; onChange: (deal: D
       <label>신청 수량 <Input type="number" min={1} step={1} required value={quantity} onChange={e => setQuantity(e.target.value)} /></label>
       <Button type="submit" disabled={busy}>수량 변경</Button>
     </form> : null}
-    {buttons.map(action => <Button key={action} type="button" disabled={busy} onClick={() => act(action)}>{actionLabels[action]}</Button>)}
+    {buttons.map(action => <Button variant={action === "reject" ? "destructive" : action === "withdraw" ? "outline" : "default"} key={action} type="button" disabled={busy} onClick={() => act(action)}>{actionLabels[action]}</Button>)}
     {error ? <p role="alert">{error}</p> : null}
   </div>
 }
