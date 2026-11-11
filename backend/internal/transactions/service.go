@@ -9,16 +9,17 @@ import (
 
 	"github.com/Mrbaeksang/kch-relay/backend/internal/database"
 	"github.com/Mrbaeksang/kch-relay/backend/internal/httpx"
+	"github.com/Mrbaeksang/kch-relay/backend/internal/product"
 	"github.com/go-chi/chi/v5"
 )
 
 // Input limits owned by this feature (docs/decisions/market-transactions.md).
 // Other screens read them from API errors instead of hard-coding them.
 const (
-	MaxTitleLength       = 100
-	MaxDescriptionLength = 5000
-	MaxUnitPrice         = int64(1_000_000_000)
-	MaxQuantity          = int64(1_000_000)
+	MaxTitleLength       = product.MaxTitleLength
+	MaxDescriptionLength = product.MaxDescriptionLength
+	MaxUnitPrice         = product.MaxUnitPrice
+	MaxQuantity          = product.MaxQuantity
 )
 
 type Service struct {

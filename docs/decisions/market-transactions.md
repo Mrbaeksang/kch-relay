@@ -24,14 +24,14 @@
 |---|---|
 | 제목 | 앞뒤 공백 제거 후 1~100자 |
 | 내용 | 앞뒤 공백 제거 후 1~5,000자 |
-| 단가 | 0~1,000,000,000원(PRD 최소 1억 원 지원 조건 충족) |
-| 잔여·신청 수량 | 잔여 0~1,000,000, 신청 1~1,000,000 |
+| 단가 | 0~10,000,000,000원(PRD 최소 1억 원 지원 조건 충족) |
+| 잔여·신청 수량 | 잔여 0~10,000, 신청 1~10,000 |
 
-단가×수량의 최대값 10^15는 JavaScript 안전 정수 범위(약 9×10^15) 안이다. 상품 등록(#17)과 값이 다르면 한쪽으로 맞춘다. 상수는 `backend/internal/transactions/service.go`에 있다.
+단가×수량의 최대값 10^14는 JavaScript 안전 정수 범위(약 9×10^14) 안이다. 상품 등록(#17)의 product 상수를 그대로 참조한다. 모든 화면은 /product-limits와 같은 한도를 따른다.
 
 ## 다른 기능과의 연결
 
-- **사진(#17)**: 상품 수정의 사진 교체는 `AttachImagesTx` 계약(같은 tx·상품ID·판매자ID·imageIds, 자체 commit 없음)을 `transactions.Module`에 주입해 사용한다. 연결 전 운영 서버는 사진 변경을 400으로 거절하며, 테스트는 실제 images 행과 테스트 전용 대체 구현으로 검증한다.
+- **사진(#17)**: 상품 수정의 사진 교체는 `AttachImagesTx` 계약(같은 tx·상품ID·판매자ID·imageIds, 자체 commit 없음)을 `transactions.Module`에 주입해 사용한다. 운영 서버에서 실제 product.AttachImagesTx를 연결했으며 사진 추가·제거를 내용 저장과 함께 처리한다.
 - **장터 조회(#16)**: `transactions.CanApply`로 canApply를 계산할 수 있다.
 - **쪽지(#19)**: 거래의 `conversationId`는 participants.id이며 전역 사용자 ID를 포함하지 않는다.
 - **알림(#20)**: 거절·수정 일괄 거절·숨김 거절 모두 공통 `AppendRejectionNotificationTx`를 같은 트랜잭션에서 호출한다.

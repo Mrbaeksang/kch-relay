@@ -16,6 +16,7 @@ function server(route: (call: Call) => Reply) {
     const meta = { hasUnreadMessages: false, hasUnreadNotifications: false }
     if (path === '/auth/config') return Response.json({ data: { authMode: 'development', developmentLogin: true, accounts: [] } })
     if (path === '/auth/me') return Response.json({ data: { user: { id: 'dev-employee-a', realName: '테스트 직원 A', department: 'TEST_DEPT', jobLevel: 'TEST_LEVEL', role: 'MEMBER', status: 'ACTIVE' }, csrfToken: 'csrf' }, meta })
+    if(path==='/product-limits')return Response.json({data:{maxImagesPerProduct:5,maxImageBytes:5242880,imageTypes:['image/jpeg','image/png']},meta})
     const call = { method: init?.method ?? 'GET', path, body: init?.body ? JSON.parse(String(init.body)) : undefined, csrf: new Headers(init?.headers).get('X-CSRF-Token') }
     calls.push(call)
     const reply = route(call)

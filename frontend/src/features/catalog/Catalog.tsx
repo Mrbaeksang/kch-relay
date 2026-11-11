@@ -1,3 +1,4 @@
+import { ApplyForm } from "@/transactions/deals"
 import { useEffect, useState } from 'react'
 import { ArrowLeft, ArrowRight, Search, RefreshCw } from 'lucide-react'
 import { useSession } from '@/auth/session'
@@ -374,10 +375,11 @@ export function ProductDetail({ productId }: { productId: string }) {
                 {resource.data.description}
               </p>
             </div>
-            <div className="mt-8 rounded-lg bg-muted p-4 text-sm text-muted-foreground">
+            {resource.data.canApply ? <div className="mt-8"><ApplyForm productId={resource.data.id} /></div> : null}
+              <div className="mt-8 rounded-lg bg-muted p-4 text-sm text-muted-foreground">
               <p>
                 {resource.data.canApply
-                  ? '문의·거래 신청 기능은 준비 중입니다.'
+                  ? '신청만으로는 수량이 확보되지 않습니다.'
                   : '현재 거래 신청할 수 없는 상품입니다.'}
               </p>
               <p className="mt-2">

@@ -1,4 +1,7 @@
-import { useEffect, useState, type FormEvent } from 'react'
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Textarea } from "@/components/ui/textarea"
+import { useEffect, useState, useRef, type FormEvent } from 'react'
 import { useSession } from '../auth/session'
 import { actionLabels, describe, statusLabels, when, won, type Deal, type DealAction, type DealStatus, type Page } from './model'
 
@@ -38,10 +41,10 @@ export function DealActions({ deal, onChange }: { deal: Deal; onChange: (deal: D
   const buttons = deal.actions.filter((a): a is Exclude<DealAction, 'updateQuantity'> => a !== 'updateQuantity')
   return <div className="deal-actions">
     {deal.actions.includes('updateQuantity') ? <form onSubmit={changeQuantity}>
-      <label>신청 수량 <input type="number" min={1} step={1} required value={quantity} onChange={e => setQuantity(e.target.value)} /></label>
-      <button type="submit" disabled={busy}>수량 변경</button>
+      <label>신청 수량 <Input type="number" min={1} step={1} required value={quantity} onChange={e => setQuantity(e.target.value)} /></label>
+      <Button type="submit" disabled={busy}>수량 변경</Button>
     </form> : null}
-    {buttons.map(action => <button key={action} type="button" disabled={busy} onClick={() => act(action)}>{actionLabels[action]}</button>)}
+    {buttons.map(action => <Button key={action} type="button" disabled={busy} onClick={() => act(action)}>{actionLabels[action]}</Button>)}
     {error ? <p role="alert">{error}</p> : null}
   </div>
 }
@@ -70,18 +73,22 @@ export function MyDeals() {
   const { api } = useSession()
   const [status, setStatus] = useState<DealStatus | ''>('')
   const [page, setPage] = useState<Page<Deal> | null>(null)
+  const [loading,setLoading]=useState(true)
+  const requestID=useRef(0)
   const [error, setError] = useState<string | null>(null)
   async function load(cursor?: string) {
+    const version=++requestID.current;setLoading(true)
     const query = new URLSearchParams()
     if (status) query.set('status', status)
     if (cursor) query.set('cursor', cursor)
     setError(null)
     try {
       const next = await api<Page<Deal>>(`/me/deals?${query}`)
+      if(version!==requestID.current)return
       setPage(previous => cursor && previous ? { items: [...previous.items, ...next.items], nextCursor: next.nextCursor } : next)
-    } catch (e) { setError(describe(e)) }
+    } catch (e) {if(version===requestID.current)setError(describe(e))} finally{if(version===requestID.current)setLoading(false)}
   }
-  useEffect(() => { void load() }, [status])
+  useEffect(() => { void load();return()=>{requestID.current++} }, [status])
   return <section aria-labelledby="my-deals" className="my-deals">
     <h2 id="my-deals">내 신청·거래</h2>
     <label>상태 <select value={status} onChange={e => setStatus(e.target.value as DealStatus | '')}>
@@ -89,11 +96,13 @@ export function MyDeals() {
       {Object.entries(statusLabels).map(([value, label]) => <option key={value} value={value}>{label}</option>)}
     </select></label>
     {error ? <p role="alert">{error}</p> : null}
-    {page && page.items.length === 0 ? <p>신청한 거래가 없습니다.</p> : null}
+    {loading?<p role="status">거래를 불러오고 있습니다.</p>:null}
+    {error?<Button type="button" variant="outline" onClick={()=>void load()}>다시 시도</Button>:null}
+    {!loading && page && page.items.length === 0 ? <p>신청한 거래가 없습니다.</p> : null}
     <ul>{page?.items.map(deal => <li key={deal.id}>
       <a href={`/market/deals/${deal.id}`}>{deal.product.title}</a> · {statusLabels[deal.status]} · {deal.requestedQuantity}개
     </li>)}</ul>
-    {page?.nextCursor ? <button type="button" onClick={() => void load(page.nextCursor!)}>더 보기</button> : null}
+    {page?.nextCursor ? <Button type="button" disabled={loading} onClick={() => void load(page.nextCursor!)}>더 보기</Button> : null}
   </section>
 }
 
@@ -112,8 +121,8 @@ export function ApplyForm({ productId }: { productId: string }) {
   }
   if (deal) return <p role="status">신청했습니다. 판매자가 수락하기 전까지 익명으로 표시됩니다. <a href={`/market/deals/${deal.id}`}>신청 확인</a></p>
   return <form onSubmit={submit} className="apply-form" aria-label="거래 신청">
-    <label>신청 수량 <input type="number" min={1} step={1} required value={quantity} onChange={e => setQuantity(e.target.value)} /></label>
-    <button type="submit" disabled={busy}>거래 신청</button>
+    <label>신청 수량 <Input type="number" min={1} step={1} required value={quantity} onChange={e => setQuantity(e.target.value)} /></label>
+    <Button type="submit" disabled={busy}>거래 신청</Button>
     <p>신청만으로는 수량이 확보되지 않습니다. 판매자가 수락하면 거래가 성사됩니다.</p>
     {error ? <p role="alert">{error}</p> : null}
   </form>
