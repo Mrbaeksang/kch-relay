@@ -1,5 +1,6 @@
 import { NotificationInbox } from "../notifications/NotificationInbox"
 import { transactionRoute } from "../transactions/routes"
+import { messageRoute } from "../messages/routes"
 import { MyProducts } from "../products/MyProducts"
 import { AdminReview } from "../products/AdminReview"
 import { Button } from '@/components/ui/button'
@@ -49,6 +50,7 @@ function Page() {
             </Button>
             <Button variant="ghost" asChild><a href="/me/products">내 상품</a></Button>
           <Button variant="ghost" asChild><a href="/market/deals">내 신청·거래</a></Button>
+          <Button variant="ghost" asChild><a href="/messages">쪽지{session.meta.hasUnreadMessages?<span aria-label="안 읽은 쪽지 있음" className="size-2 rounded-full bg-destructive"/>:null}</a></Button>
           <Button variant="ghost" asChild><a href="/notifications">알림함{session.meta.hasUnreadNotifications?<span aria-label="새 알림 있음" className="size-2 rounded-full bg-destructive"/>:null}</a></Button>
           {session.state.status === 'authenticated' &&
             session.state.user.role === 'HR_ADMIN' ? (
@@ -200,6 +202,8 @@ function RouteSlot() {
   if (path === "/notifications") return <RequireRole><NotificationInbox /></RequireRole>
   const transaction = transactionRoute(path)
   if (transaction) return <RequireRole>{transaction}</RequireRole>
+  const message = messageRoute(path)
+  if (message) return <RequireRole>{message}</RequireRole>
   if (path === '/' || path === '/market')
     return (
       <RequireRole>

@@ -152,3 +152,7 @@
 .notification-list time { color:var(--muted-foreground); font-size:14px; }
 .notification-unread { color:var(--destructive); font-size:12px; font-weight:600; }
 }
+.message-body, .message-preview { white-space: pre-wrap; overflow-wrap: anywhere; }
+.messages { list-style: none; padding: 0; }
+.messages .mine { text-align: right; }
+.counter.near-limit { font-weight: bold; color: #b3261e; }

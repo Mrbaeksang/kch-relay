@@ -1,5 +1,5 @@
 export type Meta = { hasUnreadMessages: boolean; hasUnreadNotifications: boolean }
-export type RequestOptions = { method?: string; body?: unknown; signal?: AbortSignal }
+export type RequestOptions = { method?: string; body?: unknown; signal?: AbortSignal; headers?: Record<string, string> }
 export type API = <T>(path: string, options?: RequestOptions) => Promise<T>
 export class APIError extends Error {
   constructor(public status: number, public code: string, message: string, public requestId?: string) { super(message) }
@@ -9,7 +9,8 @@ export function createAPI(hooks: Hooks, transport: typeof fetch = fetch): API {
   return async <T>(path: string, options: RequestOptions = {}): Promise<T> => {
     if (!path.startsWith('/') || path.startsWith('//')) throw new Error('API 경로가 올바르지 않습니다.')
     const method = options.method ?? 'GET'
-    const headers = new Headers({ Accept: 'application/json' })
+    const headers = new Headers({ ...options.headers, Accept: 'application/json' })
+    headers.delete('X-CSRF-Token')
     const isForm = options.body instanceof FormData
     if (options.body !== undefined && !isForm) headers.set('Content-Type', 'application/json')
     const csrf = hooks.getCSRF()
