@@ -37,7 +37,7 @@ export function ProductManage({ productId }: { productId: string }) {
     {error ? <p role="alert">{error}</p> : null}
     {product.hidden ? <p>숨긴 상품은 더 이상 수정할 수 없습니다. 성사된 거래의 완료 처리는 할 수 있습니다.</p> : <>
       <EditForm product={product} busy={busy} onSubmit={body => change(() => api(`/products/${productId}`, { method: 'PATCH', body }), '상품을 수정했습니다.')} />
-      <QuantityForm product={product} busy={busy} onSubmit={remainingQuantity => change(() => api(`/products/${productId}/quantity`, { method: 'PATCH', body: { remainingQuantity } }), '잔여 수량을 바꿨습니다. 대기 중인 신청은 그대로 유지됩니다.')} />
+      <QuantityForm key={product.remainingQuantity} product={product} busy={busy} onSubmit={remainingQuantity => change(() => api(`/products/${productId}/quantity`, { method: 'PATCH', body: { remainingQuantity } }), '잔여 수량을 바꿨습니다. 대기 중인 신청은 그대로 유지됩니다.')} />
       <div className="product-controls">
         <Button type="button" disabled={busy} onClick={() => void change(() => api(`/products/${productId}/${closed ? 'reopen' : 'close'}`, { method: 'POST' }), closed ? '모집을 다시 시작했습니다.' : '모집을 종료했습니다. 기존 신청과 거래는 유지됩니다.')}>{closed ? '모집 재개' : '모집 종료'}</Button>
         <Button variant="destructive" type="button" disabled={busy} onClick={() => {
@@ -84,7 +84,6 @@ function EditForm({ product, busy, onSubmit }: { product: ManagedProduct; busy: 
 
 function QuantityForm({ product, busy, onSubmit }: { product: ManagedProduct; busy: boolean; onSubmit: (quantity: number) => Promise<unknown> }) {
   const [quantity, setQuantity] = useState(String(product.remainingQuantity))
-  useEffect(() => setQuantity(String(product.remainingQuantity)), [product.remainingQuantity])
   return <form onSubmit={e => { e.preventDefault(); void onSubmit(Number(quantity)) }} aria-label="잔여 수량 변경">
     <label>잔여 수량 <Input type="number" min={0} step={1} required value={quantity} onChange={e => setQuantity(e.target.value)} /></label>
     <Button type="submit" disabled={busy}>수량 저장</Button>
