@@ -208,3 +208,43 @@ func TestDetailPhotosDoNotRevealStorageOrPeople(t *testing.T) {
 		t.Fatalf("suspended=%d", status)
 	}
 }
+
+func TestOwnerSeesOwnReviewStatesWithoutExposingThemToOthers(t *testing.T) {
+	h := setup(t)
+	approved := h.fixture.Product("dev-employee-a", "APPROVED", 100, 1)
+	pending := h.fixture.Product("dev-employee-a", "PENDING", 100, 1)
+	rejected := h.fixture.Product("dev-employee-a", "REJECTED", 100, 1)
+	hidden := h.fixture.Product("dev-employee-a", "APPROVED", 100, 1)
+	h.exec("UPDATE products SET deleted_at=created_at WHERE id=?", hidden)
+	h.login("dev-employee-a")
+	status, b := h.request("GET", "/products", "")
+	if status != 200 {
+		t.Fatal(status, string(b))
+	}
+	items := data(t, b)["items"].([]any)
+	if len(items) != 3 {
+		t.Fatalf("owner products missing: %s", b)
+	}
+	seen := map[string]string{}
+	for _, v := range items {
+		p := v.(map[string]any)
+		if p["isOwn"] != true || p["canApply"] != false {
+			t.Fatalf("own product state: %s", b)
+		}
+		seen[p["id"].(string)] = p["approvalStatus"].(string)
+	}
+	if seen[approved] != "APPROVED" || seen[pending] != "PENDING" || seen[rejected] != "REJECTED" {
+		t.Fatal(seen)
+	}
+	h.login("dev-employee-b")
+	_, b = h.request("GET", "/products", "")
+	items = data(t, b)["items"].([]any)
+	if len(items) != 1 || items[0].(map[string]any)["isOwn"] != false {
+		t.Fatalf("unapproved product leaked: %s", b)
+	}
+	for _, id := range []string{pending, rejected} {
+		if status, _ := h.request("GET", "/products/"+id, ""); status != 404 {
+			t.Fatal("private detail leaked", status)
+		}
+	}
+}

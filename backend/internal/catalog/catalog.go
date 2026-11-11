@@ -26,6 +26,8 @@ type Seller struct {
 }
 type Product struct {
 	ID                string  `json:"id"`
+	IsOwn             bool    `json:"isOwn"`
+	ApprovalStatus    string  `json:"approvalStatus"`
 	Title             string  `json:"title"`
 	Description       string  `json:"description"`
 	UnitPrice         int64   `json:"unitPrice"`
@@ -59,6 +61,8 @@ func scan(row scanner, viewer string) (Product, error) {
 	var deleted sql.NullString
 	err := row.Scan(&p.ID, &p.Title, &p.Description, &p.UnitPrice, &p.RemainingQuantity, &p.RecruitmentClosed, &p.CreatedAt, &seller, &status, &deleted)
 	p.Seller = Seller{Label: "판매자"}
+	p.IsOwn = seller == viewer
+	p.ApprovalStatus = status
 	p.Images = []Image{}
 	// Pending-application duplicate rules remain in the deal command's policy.
 	p.CanApply = status == "APPROVED" && !deleted.Valid && !p.RecruitmentClosed && p.RemainingQuantity > 0 && seller != viewer
@@ -92,8 +96,8 @@ func (s service) list(r *http.Request) (httpx.Result, error) {
 	actor, _ := httpx.CurrentUser(r.Context())
 	result := List{Items: []Product{}}
 	err = database.WithTx(r.Context(), s.DB, func(tx *sql.Tx) error {
-		query := `SELECT ` + columns + ` FROM products WHERE approval_status='APPROVED' AND deleted_at IS NULL`
-		args := []any{}
+		query := `SELECT ` + columns + ` FROM products WHERE (approval_status='APPROVED' OR seller_id=?) AND deleted_at IS NULL`
+		args := []any{actor.ID}
 		if q != "" {
 			escaped := strings.NewReplacer(`\`, `\\`, `%`, `\%`, `_`, `\_`).Replace(q)
 			query += ` AND (title LIKE ? ESCAPE '\' OR description LIKE ? ESCAPE '\')`
