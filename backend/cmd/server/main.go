@@ -9,6 +9,7 @@ import (
 
 	"github.com/Mrbaeksang/kch-relay/backend/internal/application"
 	"github.com/Mrbaeksang/kch-relay/backend/internal/config"
+	"github.com/Mrbaeksang/kch-relay/backend/internal/transactions"
 )
 
 func main() {
@@ -24,7 +25,8 @@ func run() error {
 	}
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()
-	app, err := application.New(ctx, c)
+	// Photo changes are refused until the product registration feature supplies AttachImagesTx.
+	app, err := application.New(ctx, c, transactions.Module(nil))
 	if err != nil {
 		return err
 	}
