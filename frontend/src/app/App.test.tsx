@@ -80,3 +80,18 @@ test('로그인한 직원은 메뉴에서 알림함으로 가고 새 알림 표�
   expect(link.getAttribute('href')).toBe('/notifications')
   expect(screen.getByLabelText('새 알림 있음')).toBeTruthy()
 })
+
+test('직원이 모바일 메뉴를 열고 닫을 수 있다',async()=>{
+ vi.stubGlobal('fetch',async(input:RequestInfo|URL)=>{
+  const path=String(input)
+  if(path.endsWith('/auth/config'))return Response.json({data:{authMode:'disabled',developmentLogin:false,accounts:[]}})
+  if(path.endsWith('/auth/me'))return Response.json({data:{user:{id:'viewer',realName:'가상 직원',role:'MEMBER',status:'ACTIVE'},csrfToken:'csrf'}})
+  return Response.json({data:{items:[],nextCursor:null}})
+ })
+ render(<App />)
+ const menu=await screen.findByRole('button',{name:'메뉴'})
+ expect(menu.getAttribute('aria-expanded')).toBe('false')
+ const {fireEvent}=await import('@testing-library/react')
+ fireEvent.click(menu);expect(menu.getAttribute('aria-expanded')).toBe('true')
+ fireEvent.click(menu);expect(menu.getAttribute('aria-expanded')).toBe('false')
+})

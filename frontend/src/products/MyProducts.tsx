@@ -43,7 +43,7 @@ export function MyProducts() {
   }
 
   return <section aria-labelledby="my-products-title" className="products-page">
-    <h2 id="my-products-title">내 상품</h2>
+    <h1 id="my-products-title">내 상품</h1>
     {error ? <p role="alert">{error}</p> : null}
     <p aria-live="polite">{notice}</p>
     {limits && !creating ? <Button type="button" onClick={() => { setCreating(true); setNotice('') }}>상품 등록</Button> : null}

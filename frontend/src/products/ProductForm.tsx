@@ -72,7 +72,7 @@ export function ProductForm({ limits, initial, submitLabel, onSubmit, onCancel }
       <ul className="photo-list">
         {images.map(image => <li key={image.id}>
           <img src={image.url} alt="상품 사진" width={96} height={96} />
-          <Button type="button" disabled={busy} onClick={() => setImages(current => current.filter(item => item.id !== image.id))}>사진 빼기</Button>
+          <Button variant="outline" type="button" disabled={busy} onClick={() => setImages(current => current.filter(item => item.id !== image.id))}>사진 빼기</Button>
         </li>)}
       </ul>
       <label>사진 추가 <Input type="file" accept={limits.imageTypes.join(',')} multiple disabled={busy || images.length >= limits.maxImagesPerProduct} onChange={event => { void addPhotos(event.target.files); event.target.value = '' }} /></label>
@@ -80,7 +80,7 @@ export function ProductForm({ limits, initial, submitLabel, onSubmit, onCancel }
     {error ? <p role="alert">{error}</p> : null}
     <div className="actions">
       <Button type="submit" disabled={busy}>{submitLabel}</Button>
-      {onCancel ? <Button type="button" onClick={onCancel} disabled={busy}>취소</Button> : null}
+      {onCancel ? <Button variant="outline" type="button" onClick={onCancel} disabled={busy}>취소</Button> : null}
     </div>
   </form>
 }

@@ -15,6 +15,7 @@ import (
 	"github.com/Mrbaeksang/kch-relay/backend/internal/messages"
 	"github.com/Mrbaeksang/kch-relay/backend/internal/notifications"
 	"github.com/Mrbaeksang/kch-relay/backend/internal/product"
+	"github.com/Mrbaeksang/kch-relay/backend/internal/statistics"
 	"github.com/Mrbaeksang/kch-relay/backend/internal/transactions"
 )
 
@@ -31,7 +32,7 @@ func run() error {
 	}
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()
-	app, err := application.New(ctx, c, notifications.Module(nil), catalog.Register, product.Module, transactions.Module(func(ctx context.Context, tx *sql.Tx, productID, sellerID string, ids []string, _ time.Time) error {
+	app, err := application.New(ctx, c, statistics.Register, notifications.Module(nil), catalog.Register, product.Module, transactions.Module(func(ctx context.Context, tx *sql.Tx, productID, sellerID string, ids []string, _ time.Time) error {
 		return product.AttachImagesTx(ctx, tx, productID, sellerID, ids)
 	}), messages.Module())
 	if err != nil {
