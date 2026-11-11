@@ -34,6 +34,8 @@ func newService(db *sql.DB, meta httpx.MetaProvider, now func() time.Time) *Serv
 func (s *Service) register(r chi.Router) {
 	h := func(fn httpx.Handler) http.HandlerFunc { return httpx.Adapt(fn, s.meta) }
 	r.Post("/products/{productId}/conversations", h(s.startConversation))
+	r.Get("/conversations/{conversationId}/messages", h(s.listMessages))
+	r.Post("/conversations/{conversationId}/messages", h(s.sendMessage))
 }
 
 // write runs fn in one transaction with the request time.

@@ -86,3 +86,29 @@ func (s *Service) startConversation(r *http.Request) (httpx.Result, error) {
 	}
 	return httpx.Result{Status: status, Data: map[string]string{"conversationId": id}}, nil
 }
+
+type identity struct {
+	RealName   string `json:"realName"`
+	Department string `json:"department"`
+	JobLevel   string `json:"jobLevel"`
+}
+
+type counterpartyView struct {
+	Label    string    `json:"label"`
+	Identity *identity `json:"identity"`
+}
+
+// counterparty describes the other party for the viewer. The identity is
+// filled only after the two of them were matched in an accepted deal.
+func counterparty(ctx context.Context, q queryer, c conversation, viewerID string) (counterpartyView, error) {
+	v := counterpartyView{Label: counterpartyLabel(c.viewerIsSeller(viewerID), c.Inquirer, c.Applicant)}
+	if !c.Revealed {
+		return v, nil
+	}
+	var id identity
+	if err := q.QueryRowContext(ctx, "SELECT real_name,department,job_level FROM users WHERE id=?", otherParty(c, viewerID)).Scan(&id.RealName, &id.Department, &id.JobLevel); err != nil {
+		return v, err
+	}
+	v.Identity = &id
+	return v, nil
+}
