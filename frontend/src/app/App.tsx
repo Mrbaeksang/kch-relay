@@ -1,3 +1,5 @@
+import { Onboarding } from '../auth/Onboarding'
+import { MemberAdmin, DepartmentAdmin } from '../auth/Administration'
 import { CompletedDealStatistics } from "../statistics/CompletedDealStatistics"
 import { NotificationInbox } from "../notifications/NotificationInbox"
 import { transactionRoute } from "../transactions/routes"
@@ -23,7 +25,7 @@ function Page() {
   const [navigationOpen,setNavigationOpen]=useState(false)
   if (import.meta.env.DEV && window.location.pathname === '/design-system')
     return <DesignSystem />
-  const authenticated = session.state.status === 'authenticated'
+  const authenticated = session.state.status === 'authenticated' && session.state.user.status === 'ACTIVE'
   return (
     <main className="page-shell flex flex-col">
       <a
@@ -69,7 +71,7 @@ function Page() {
             >
               로그아웃
             </Button>
-          {session.state.status === "authenticated" && session.state.user.role === "HR_ADMIN" ? <Button variant="ghost" asChild><a href="/admin/statistics">거래 통계</a></Button>:null}</nav>
+          {session.state.status === "authenticated" && session.state.user.role === "HR_ADMIN" ? <Button variant="ghost" asChild><a href="/admin/statistics">거래 통계</a></Button>:null}{session.state.status === "authenticated" && session.state.user.role === "HR_ADMIN" ? <><Button variant="ghost" asChild><a href="/admin/members">구성원 관리</a></Button><Button variant="ghost" asChild><a href="/admin/departments">부서 관리</a></Button></>:null}</nav>
           </>
         ) : (
           <Badge variant="secondary">구성원 전용</Badge>
@@ -93,7 +95,7 @@ function Page() {
           <p role="status" className="py-12">
             로그인 상태를 확인하고 있습니다.
           </p>
-        ) : authenticated ? (
+        ) : session.state.status === 'authenticated' && session.state.user.status !== 'ACTIVE' ? <Onboarding /> : authenticated ? (
           <RouteSlot
             key={
               session.state.status === 'authenticated'
@@ -127,7 +129,7 @@ function Page() {
                 <span>수락한 당사자끼리 신원 공개</span>
               </p>
             </div>
-            <DevelopmentSession />
+            {session.config?.googleLogin ? <div className="mt-8 space-y-3">{session.error ? <p role="alert" className="text-destructive">{session.error}</p> : null}{new URLSearchParams(window.location.search).has('loginError') ? <p role="alert" className="text-destructive">구글 로그인을 완료하지 못했습니다. 다시 시도해 주세요.</p> : null}<Button asChild><a href="/api/v1/auth/google/start">Google 계정으로 로그인</a></Button><p className="text-sm text-muted-foreground">처음 이용하면 가입 신청 후 인사팀 승인이 필요합니다.</p></div> : <DevelopmentSession />}
           </section>
         )}
       </div>
@@ -203,6 +205,8 @@ function DevelopmentSession() {
 // Future feature tickets add their screen entry points here; auth stays in the shared provider.
 function RouteSlot() {
   const path = window.location.pathname
+ if(path === "/admin/members") return <RequireRole role="HR_ADMIN"><MemberAdmin /></RequireRole>
+ if(path === "/admin/departments") return <RequireRole role="HR_ADMIN"><DepartmentAdmin /></RequireRole>
   if (path === "/notifications") return <RequireRole><NotificationInbox /></RequireRole>
   if(path === "/admin/statistics") return <RequireRole role="HR_ADMIN"><CompletedDealStatistics /></RequireRole>
   const transaction = transactionRoute(path)
