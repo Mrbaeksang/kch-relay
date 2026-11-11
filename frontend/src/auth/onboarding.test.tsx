@@ -34,3 +34,8 @@ test('관리자가 가입을 승인하고 목록에서 이용 중 상태를 확�
  })
  render(<SessionProvider><MemberAdmin/></SessionProvider>);fireEvent.click(await screen.findByRole('button',{name:'가입 승인'}));await screen.findByText('이용 중');expect(screen.queryByRole('button',{name:'가입 승인'})).toBeNull()
 })
+
+test('정지된 구글 계정은 로그인 화면에서 제한 이유를 확인한다',async()=>{
+ vi.stubGlobal('fetch',async(input:RequestInfo|URL)=>String(input).endsWith('/auth/config')?Response.json({data:{authMode:'google',googleLogin:true,developmentLogin:false,accounts:[]}}):Response.json({error:{code:'ACCOUNT_SUSPENDED',message:'이용이 제한된 계정입니다.'}},{status:403}))
+ render(<App/>);await screen.findByRole('alert');expect(screen.getByRole('alert').textContent).toContain('이용이 제한된 계정입니다.')
+})

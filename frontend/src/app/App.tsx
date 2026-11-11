@@ -129,7 +129,7 @@ function Page() {
                 <span>수락한 당사자끼리 신원 공개</span>
               </p>
             </div>
-            {session.config?.googleLogin ? <div className="mt-8 space-y-3">{new URLSearchParams(window.location.search).has('loginError') ? <p role="alert" className="text-destructive">구글 로그인을 완료하지 못했습니다. 다시 시도해 주세요.</p> : null}<Button asChild><a href="/api/v1/auth/google/start">Google 계정으로 로그인</a></Button><p className="text-sm text-muted-foreground">처음 이용하면 가입 신청 후 인사팀 승인이 필요합니다.</p></div> : <DevelopmentSession />}
+            {session.config?.googleLogin ? <div className="mt-8 space-y-3">{session.error ? <p role="alert" className="text-destructive">{session.error}</p> : null}{new URLSearchParams(window.location.search).has('loginError') ? <p role="alert" className="text-destructive">구글 로그인을 완료하지 못했습니다. 다시 시도해 주세요.</p> : null}<Button asChild><a href="/api/v1/auth/google/start">Google 계정으로 로그인</a></Button><p className="text-sm text-muted-foreground">처음 이용하면 가입 신청 후 인사팀 승인이 필요합니다.</p></div> : <DevelopmentSession />}
           </section>
         )}
       </div>
