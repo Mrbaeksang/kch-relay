@@ -1,3 +1,5 @@
+import { MyProducts } from "../products/MyProducts"
+import { AdminReview } from "../products/AdminReview"
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { DesignSystem } from './DesignSystem'
@@ -43,10 +45,11 @@ function Page() {
             <Button variant="ghost" asChild>
               <a href="/market">장터</a>
             </Button>
-            {session.state.status === 'authenticated' &&
+            <Button variant="ghost" asChild><a href="/me/products">내 상품</a></Button>
+          {session.state.status === 'authenticated' &&
             session.state.user.role === 'HR_ADMIN' ? (
               <Button variant="ghost" asChild>
-                <a href="/admin">관리자</a>
+                <a href="/admin/products">상품 심사</a>
               </Button>
             ) : null}
             <Button
@@ -157,7 +160,7 @@ function DevelopmentSession() {
           </Button>
           <nav aria-label="개발 확인">
             <a href="/">처음으로</a> · <a href="/market">직원 영역</a> ·{' '}
-            <a href="/admin">관리자 영역</a>
+            <a href="/admin/products">상품 심사 영역</a>
           </nav>
         </>
       ) : null}
@@ -210,6 +213,8 @@ function RouteSlot() {
       </RequireRole>
     )
   }
+  if (path === '/me/products') return <RequireRole><MyProducts /></RequireRole>
+  if (path === '/admin/products') return <RequireRole role="HR_ADMIN"><AdminReview /></RequireRole>
   if (path === '/admin')
     return (
       <RequireRole role="HR_ADMIN">
