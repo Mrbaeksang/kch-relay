@@ -39,3 +39,31 @@ test('정지된 구글 계정은 로그인 화면에서 제한 이유를 확인�
  vi.stubGlobal('fetch',async(input:RequestInfo|URL)=>String(input).endsWith('/auth/config')?Response.json({data:{authMode:'google',googleLogin:true,developmentLogin:false,accounts:[]}}):Response.json({error:{code:'ACCOUNT_SUSPENDED',message:'이용이 제한된 계정입니다.'}},{status:403}))
  render(<App/>);await screen.findByRole('alert');expect(screen.getByRole('alert').textContent).toContain('이용이 제한된 계정입니다.')
 })
+
+test('반려된 사용자가 기존 정보를 수정하고 재신청하면 승인 대기로 돌아간다',async()=>{
+ let pending=false
+ vi.stubGlobal('fetch',async(input:RequestInfo|URL,init?:RequestInit)=>{
+  const p=String(input)
+  if(p.endsWith('/auth/config'))return Response.json({data:{authMode:'google',accounts:[]}})
+  if(p.endsWith('/auth/me'))return Response.json({data:{user:{id:'rejected',realName:'기존 이름',department:'인사팀',jobLevel:'사원',role:'MEMBER',status:pending?'PENDING':'REJECTED'},csrfToken:'csrf'}})
+  if(p.endsWith('/auth/departments'))return Response.json({data:{departments:[{id:'hr',name:'인사팀',isHR:true}],jobLevels:['사원','대리']}})
+  if(p.endsWith('/auth/register')){expect(JSON.parse(String(init?.body))).toEqual({realName:'수정한 이름',departmentId:'hr',jobLevel:'대리'});pending=true;return Response.json({data:{status:'PENDING'}})}
+  throw Error(p)
+ })
+ render(<App/>);const name=await screen.findByLabelText('이름');expect((name as HTMLInputElement).value).toBe('기존 이름')
+ fireEvent.change(name,{target:{value:'수정한 이름'}});fireEvent.change(screen.getByLabelText('직급'),{target:{value:'대리'}})
+ fireEvent.click(await screen.findByRole('button',{name:'가입 재신청'}));await screen.findByRole('heading',{name:'가입 승인을 기다리고 있습니다'})
+ expect(screen.queryByRole('link',{name:'내 상품'})).toBeNull()
+})
+
+test('관리자는 반려 목록에서 반려를 취소하고 승인 대기로 되돌린다',async()=>{
+ const {MemberAdmin}=await import('./Administration');const {SessionProvider}=await import('./session');let reopened=false;vi.stubGlobal('confirm',()=>true)
+ vi.stubGlobal('fetch',async(input:RequestInfo|URL)=>{
+  const p=String(input)
+  if(p.endsWith('/auth/config'))return Response.json({data:{authMode:'google',accounts:[]}})
+  if(p.endsWith('/auth/me'))return Response.json({data:{user:{id:'admin',role:'HR_ADMIN',status:'ACTIVE'},csrfToken:'csrf'}})
+  if(p.endsWith('/reopen')){reopened=true;return Response.json({data:{updated:true}})}
+  return Response.json({data:{members:[{id:'rejected',realName:'가상 직원',email:'fake@example.org',department:'인사팀',jobLevel:'사원',role:'MEMBER',status:reopened?'PENDING':'REJECTED'}]}})
+ })
+ render(<SessionProvider><MemberAdmin/></SessionProvider>);fireEvent.click(await screen.findByRole('button',{name:'반려 취소'}));await screen.findByRole('button',{name:'가입 승인'});expect(screen.queryByRole('button',{name:'반려 취소'})).toBeNull()
+})

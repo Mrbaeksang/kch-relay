@@ -80,7 +80,7 @@ func (s *Service) registerMember(r *http.Request) (httpx.Result, error) {
 		} else if err != nil {
 			return err
 		}
-		result, err := tx.ExecContext(r.Context(), `UPDATE users SET real_name=?,department=?,department_id=?,job_level=?,membership_status='PENDING',role='MEMBER',updated_at=? WHERE id=? AND membership_status='PROFILE_REQUIRED' AND status='ACTIVE'`, in.RealName, name, in.DepartmentID, in.JobLevel, database.Timestamp(s.now()), a.ID)
+		result, err := tx.ExecContext(r.Context(), `UPDATE users SET real_name=?,department=?,department_id=?,job_level=?,membership_status='PENDING',role='MEMBER',reviewed_at=NULL,reviewed_by=NULL,updated_at=? WHERE id=? AND membership_status IN ('PROFILE_REQUIRED','REJECTED') AND status='ACTIVE'`, in.RealName, name, in.DepartmentID, in.JobLevel, database.Timestamp(s.now()), a.ID)
 		if err != nil {
 			return err
 		}
@@ -135,8 +135,8 @@ func (s *Service) reviewMember(r *http.Request) (httpx.Result, error) {
 		now := database.Timestamp(s.now())
 		switch action {
 		case "approve", "reject":
-			if membership != "PENDING" || status != "ACTIVE" {
-				return httpx.Error(409, "MEMBERSHIP_CONFLICT", "승인 대기 중인 계정만 처리할 수 있습니다.")
+			if (membership != "PENDING" && !(action == "approve" && membership == "REJECTED")) || status != "ACTIVE" {
+				return httpx.Error(409, "MEMBERSHIP_CONFLICT", "승인 대기 또는 가입 반려 계정만 승인할 수 있습니다.")
 			}
 			next, role := "REJECTED", "MEMBER"
 			if action == "approve" {
@@ -146,6 +146,11 @@ func (s *Service) reviewMember(r *http.Request) (httpx.Result, error) {
 				}
 			}
 			_, err = tx.ExecContext(r.Context(), `UPDATE users SET membership_status=?,role=?,reviewed_at=?,reviewed_by=?,updated_at=? WHERE id=?`, next, role, now, actor.ID, now, id)
+		case "reopen":
+			if membership != "REJECTED" || status != "ACTIVE" {
+				return httpx.Error(409, "MEMBERSHIP_CONFLICT", "가입 반려 상태만 승인 대기로 되돌릴 수 있습니다.")
+			}
+			_, err = tx.ExecContext(r.Context(), `UPDATE users SET membership_status='PENDING',role='MEMBER',reviewed_at=NULL,reviewed_by=NULL,updated_at=? WHERE id=?`, now, id)
 		case "suspend", "restore":
 			if membership != "ACTIVE" {
 				return httpx.Error(409, "MEMBERSHIP_CONFLICT", "가입 승인된 계정만 정지·해제할 수 있습니다.")
