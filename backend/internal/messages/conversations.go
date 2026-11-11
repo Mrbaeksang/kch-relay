@@ -33,6 +33,13 @@ type conversation struct {
 
 func (c conversation) viewerIsSeller(userID string) bool { return c.SellerID == userID }
 
+func role(c conversation, userID string) string {
+	if c.viewerIsSeller(userID) {
+		return "SELLER"
+	}
+	return "BUYER"
+}
+
 // loadConversation returns the conversation only to its two parties; anyone
 // else (administrators included) gets the same 404 as for a missing ID.
 func loadConversation(ctx context.Context, q queryer, conversationID, userID string) (conversation, error) {
@@ -182,11 +189,7 @@ func (s *Service) myConversations(r *http.Request) (httpx.Result, error) {
 		if err != nil {
 			return httpx.Result{}, err
 		}
-		role := "BUYER"
-		if x.c.viewerIsSeller(user) {
-			role = "SELLER"
-		}
-		items = append(items, summaryView{ConversationID: x.c.ID, ViewerRole: role, Product: productRef{ID: x.c.ProductID, Title: x.c.ProductTitle},
+		items = append(items, summaryView{ConversationID: x.c.ID, ViewerRole: role(x.c, user), Product: productRef{ID: x.c.ProductID, Title: x.c.ProductTitle},
 			Counterparty: other, LastMessage: x.last, HasUnread: x.unread})
 	}
 	return httpx.Result{Data: map[string]any{"items": items, "nextCursor": next}}, nil

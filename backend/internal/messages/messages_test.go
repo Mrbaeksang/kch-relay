@@ -181,3 +181,16 @@ func TestMonotonicCreatedAt(t *testing.T) {
 		t.Fatalf("created_at must strictly increase within a conversation: %s %s %s", items[2].CreatedAt, items[1].CreatedAt, items[0].CreatedAt)
 	}
 }
+
+func TestMessagesIncludeConversationHeader(t *testing.T) {
+	h := newHarness(t)
+	id := newConversation(h)
+	var page struct {
+		Conversation listItem `json:"conversation"`
+	}
+	h.must(200, buyer, "GET", "/conversations/"+id+"/messages", nil, &page)
+	c := page.Conversation
+	if c.ConversationID != id || c.ViewerRole != "BUYER" || c.Product.Title != "가상 상품" || c.Counterparty.Label != "판매자" {
+		t.Fatalf("header for an empty conversation: %+v", c)
+	}
+}

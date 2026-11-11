@@ -201,7 +201,8 @@ func (s *Service) listMessages(r *http.Request) (httpx.Result, error) {
 		cursor := httpx.EncodeCursor(httpx.Cursor{CreatedAt: last.CreatedAt, ID: last.ID})
 		next = &cursor
 	}
-	return httpx.Result{Data: map[string]any{"items": items, "nextCursor": next}}, nil
+	header := summaryView{ConversationID: c.ID, ViewerRole: role(c, user), Product: productRef{ID: c.ProductID, Title: c.ProductTitle}, Counterparty: other}
+	return httpx.Result{Data: map[string]any{"conversation": header, "items": items, "nextCursor": next}}, nil
 }
 
 var errForeignMessage = httpx.Invalid("읽음 기준 쪽지가 이 대화에 없습니다.")
