@@ -127,3 +127,16 @@
 .description { white-space:pre-wrap; }
 @media(max-width:639px) { .products-page table { display:block; overflow-x:auto; } }
 }
+
+@layer components {
+.product-manage,.deal-detail,.my-deals { padding-block:32px; }
+.product-manage form,.deal-actions form,.apply-form { display:flex; flex-direction:column; gap:12px; max-width:640px; margin-block:24px; }
+.product-manage label,.deal-actions label,.apply-form label { display:flex; flex-direction:column; gap:8px; }
+.product-controls,.deal-actions { display:flex; flex-wrap:wrap; gap:8px; margin-block:16px; }
+.product-manage input[type=checkbox] { width:20px; height:20px; }
+.deal-summary { display:grid; grid-template-columns:auto 1fr; gap:8px 24px; margin-block:16px; }
+.deal-summary dt { color:var(--muted-foreground); }
+.seller-deals>li,.my-deals li { padding-block:20px; border-bottom:1px solid var(--border); }
+.my-deals select { min-height:44px; border:1px solid var(--input); padding:8px; border-radius:var(--radius-md); }
+.deal-detail a,.seller-deals a,.my-deals a { text-decoration:underline; text-underline-offset:4px; }
+}

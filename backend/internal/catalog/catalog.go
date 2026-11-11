@@ -12,6 +12,7 @@ import (
 	"github.com/Mrbaeksang/kch-relay/backend/internal/application"
 	"github.com/Mrbaeksang/kch-relay/backend/internal/database"
 	"github.com/Mrbaeksang/kch-relay/backend/internal/httpx"
+	"github.com/Mrbaeksang/kch-relay/backend/internal/transactions"
 	"github.com/go-chi/chi/v5"
 )
 
@@ -128,6 +129,10 @@ func (s service) list(r *http.Request) (httpx.Result, error) {
 			result.NextCursor = &cursor
 		}
 		for i := range result.Items {
+			result.Items[i].CanApply, err = transactions.CanApply(r.Context(), tx, result.Items[i].ID, actor.ID)
+			if err != nil {
+				return err
+			}
 			if err := images(r, tx, &result.Items[i]); err != nil {
 				return err
 			}
@@ -145,6 +150,10 @@ func (s service) detail(r *http.Request) (httpx.Result, error) {
 		if errors.Is(err, sql.ErrNoRows) {
 			return httpx.Error(404, "NOT_FOUND", "상품을 찾을 수 없습니다.")
 		}
+		if err != nil {
+			return err
+		}
+		result.CanApply, err = transactions.CanApply(r.Context(), tx, result.ID, actor.ID)
 		if err != nil {
 			return err
 		}

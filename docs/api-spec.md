@@ -132,7 +132,7 @@ email·googleSubject는 인증 결과에서 얻는다. role·status는 서버 �
 - 목록과 상세는 기존 공통 세션·활성 직원 검사·응답 meta를 사용한다. 목록 DTO도 위 공개 상품 응답과 같은 필드를 가지며 판매자 신원을 포함하지 않는다.
 - q는 앞뒤 공백을 제거한 최대 200자 검색어다. 제목·본문의 부분 문자열을 검색하고 `%`, `_`, 역슬래시는 와일드카드가 아닌 문자로 취급한다. limit 기본20·최대100, created_at DESC·id DESC 커서 정렬이다.
 - 공개 목록에는 모집 종료·수량 소진 상품도 포함한다. 판매자도 목록에서는 자기 비공개 상품을 볼 수 없으며, 단건 상세에서만 자기 대기·반려·숨김 상품을 조회한다. 다른 사용자와 HR의 일반 장터 상세 경로에서는 비공개·숨김·없는 상품 모두404다. HR 전용 조회는 #17 범위다.
-- canApply는 현재 공개·비삭제·모집 중·잔여 수량 양수·다른 판매자 여부를 검사한다. 진행 중 신청의 중복 제한은 기존 제안 상태이며 #18에서 정책을 확정하면 조회 판정과 함께 연결해야 한다. 현재값을 거래 수락/신청 권한의 대체 검사로 사용하지 않는다.
+- canApply는 transactions.CanApply로 공개·비삭제·모집 중·잔여 수량 양수·다른 판매자·같은 상품에 REQUESTED/ACCEPTED 거래 없음 여부를 검사한다. #18의 신청 API도 같은 정책을 적용한다. 현재값을 거래 수락/신청 권한의 대체 검사로 사용하지 않는다.
 - images는 sortOrder·id 순이며 `{id,url,sortOrder}`만 제공한다. url은 `/api/v1/images/{imageId}`이고 업로더·파일명·storage_key는 반환하지 않는다. 이미지 업로드·파일 응답과 사진 권한은 #17에서 구현한다.
 - 구글 인증·상품 등록/승인·문의/신청 버튼의 실제 처리는 별도 티켓이다. 아직 없는 기능은 화면에서 준비 중으로 안내한다.
 
@@ -216,6 +216,8 @@ email·googleSubject는 인증 결과에서 얻는다. role·status는 서버 �
 ```
 
 수락 전 합의 필드·totalPrice·acceptedAt은 null, counterparty.identity도 null이다. 상품 현재 정보와 거래 확정 단가·수량은 구분한다. **제안:** 같은 상품에서 이미 신원을 공개한 두 사람은 이후 대화·재신청에서도 공개 상태를 유지한다.
+
+2026-11-11 구현(#18): 거래 응답은 위 필드에 더해 viewerRole(BUYER/SELLER), product(id·title·현재 unitPrice·remainingQuantity·recruitmentClosed·hidden), completedAt·rejectedAt·withdrawnAt, 현재 사용자가 할 수 있는 actions(updateQuantity·withdraw·accept·reject·complete)를 준다. 판매자의 `GET /products/{productId}/deals`는 items·nextCursor와 함께 관리용 product(approvalStatus·hidden·imageIds·pendingApplicationCount 포함)를 준다. 상품 관리 API는 같은 관리용 product를 반환한다. 미정 정책의 선택과 입력 상한은 [기능 3 결정 기록](decisions/market-transactions.md)을 따른다.
 
 신청 생성·쪽지 발송에는 `Idempotency-Key`를 제안한다. 사용자·경로·키 기준 최초 요청 해시·결과를 저장하고 같은 키의 다른 본문은 409다. 그래야 완료·철회 직후 지연된 네트워크 재시도가 새 신청을 만들지 않는다. 저장소·키 보관 기간은 미정이다.
 

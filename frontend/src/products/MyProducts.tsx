@@ -57,6 +57,7 @@ export function MyProducts() {
     {!loading && !error && products.length === 0 ? <p>등록한 상품이 없습니다.</p> : <ul className="product-list">
       {products.map(product => <li key={product.id}>
         <article aria-label={product.title}>
+          <a className="inline-flex min-h-11 items-center underline" href={`/market/products/${product.id}/manage`}>상품·신청 관리</a>
           <h3>{product.title} <span className="status">{statusLabel[product.approvalStatus]}</span></h3>
           <p>{won(product.unitPrice)} · 수량 {product.remainingQuantity} · 등록 {when(product.createdAt)}</p>
           {product.images.length ? <p className="photos">{product.images.map(image => <img key={image.id} src={image.url} alt="상품 사진" width={72} height={72} />)}</p> : null}
