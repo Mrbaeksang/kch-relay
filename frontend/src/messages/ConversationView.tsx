@@ -84,9 +84,9 @@ export function ConversationView({ conversationId }: { conversationId: string })
 
   return <section aria-labelledby="conversation" className="conversation">
     <h1 id="conversation">{header ? `${header.product.title} · ${describeCounterparty(header.counterparty)}` : '쪽지'}</h1>
-    <p><a href="/messages">대화 목록</a> · <Button type="button" disabled={loading} onClick={() => void load()}>새로고침</Button></p>
+    <p><a href="/messages">대화 목록</a> · <Button type="button" disabled={loading || sending} onClick={() => void load()}>새로고침</Button></p>
     {error ? <p role="alert">{error}</p> : null}
-    {older ? <Button type="button" disabled={loading} onClick={() => void load(older)}>이전 쪽지 더 보기</Button> : null}
+    {older ? <Button type="button" disabled={loading || sending} onClick={() => void load(older)}>이전 쪽지 더 보기</Button> : null}
     {header && items.length === 0 ? <p>아직 쪽지가 없습니다. 첫 쪽지를 보내 보세요.</p> : null}
     <ol className="messages">{items.map(m => <li key={m.id} className={m.sender.kind === 'SELF' ? 'mine' : 'theirs'}>
       <strong>{m.sender.kind === 'SELF' ? m.sender.label : describeCounterparty(m.sender)}</strong>
@@ -94,11 +94,11 @@ export function ConversationView({ conversationId }: { conversationId: string })
       <small>{when(m.createdAt)}{m.sender.kind === 'SELF' ? ` · ${m.readAt ? '읽음' : '안 읽음'}` : ''}</small>
     </li>)}</ol>
     <form onSubmit={submit}>
-      <label>쪽지 내용<Textarea disabled={sending} value={draft.body} onChange={e => edit(e.target.value)} rows={4} /></label>
+      <label>쪽지 내용<Textarea disabled={sending || loading} value={draft.body} onChange={e => edit(e.target.value)} rows={4} /></label>
       <p className={length > MAX_MESSAGE_LENGTH * 0.95 ? 'counter near-limit' : 'counter'} aria-live="polite">{length.toLocaleString('ko-KR')} / {MAX_MESSAGE_LENGTH.toLocaleString('ko-KR')}</p>
       {tooLong ? <p role="alert">쪽지는 {MAX_MESSAGE_LENGTH.toLocaleString('ko-KR')}자까지 보낼 수 있습니다.</p> : null}
       {sendError ? <p role="alert">{sendError}</p> : null}
-      <Button type="submit" disabled={sending || blank || tooLong}>{sendError ? '다시 보내기' : '보내기'}</Button>
+      <Button type="submit" disabled={loading || sending || blank || tooLong}>{sendError ? '다시 보내기' : '보내기'}</Button>
     </form>
   </section>
 }

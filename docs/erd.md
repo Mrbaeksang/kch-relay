@@ -166,7 +166,7 @@ erDiagram
 - read_at: 수신자가 읽음 처리한 시각, nullable. 발신자는 변경 불가.
 - created_at: 필수. 수정·삭제 기능은 초안에 없다.
 - 안 읽은 쪽지는 recipient_id와 read_at으로 조회한다. users에 중복 카운터를 두지 않는 것을 제안한다.
-- idempotency_key: 발송 재시도 키, nullable(migration `00003`, #19). `(participant_id, sender_id, idempotency_key)` 부분 고유 인덱스. 보관 기간은 쪽지를 따른다([결정 기록](decisions/anonymous-messages.md)).
+- idempotency_key: 발송 재시도 키, nullable(migration `00005`, #19). `(participant_id, sender_id, idempotency_key)` 부분 고유 인덱스. 보관 기간은 쪽지를 따른다([결정 기록](decisions/anonymous-messages.md)).
 - created_at은 대화 안에서 엄격히 증가하도록 저장한다(읽음 처리 경계 보장).
 
 ### images / reviews

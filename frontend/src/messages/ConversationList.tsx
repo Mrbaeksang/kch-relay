@@ -1,5 +1,4 @@
 import { Button } from "@/components/ui/button"
-import { Textarea } from "@/components/ui/textarea"
 import { useEffect, useState } from 'react'
 import { useSession } from '../auth/session'
 import { describe, when } from '../transactions/model'
@@ -19,7 +18,7 @@ export function ConversationList() {
     } catch (e) { setError(describe(e)) } finally { setBusy(false) }
   }
   useEffect(() => { void load() }, [])
-  return <section aria-labelledby="conversations" className="conversations">
+  return <section aria-labelledby="conversations" className="conversation-list">
     <h1 id="conversations">쪽지</h1>
     <Button type="button" disabled={busy} onClick={() => void load()}>새로고침</Button>
     {error ? <p role="alert">{error}</p> : null}

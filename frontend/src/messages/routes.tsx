@@ -1,5 +1,3 @@
-import { Button } from "@/components/ui/button"
-import { Textarea } from "@/components/ui/textarea"
 import type { ReactNode } from 'react'
 import { ConversationList } from './ConversationList'
 import { ConversationView } from './ConversationView'

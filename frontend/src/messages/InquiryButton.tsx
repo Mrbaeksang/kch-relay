@@ -1,5 +1,4 @@
 import { Button } from "@/components/ui/button"
-import { Textarea } from "@/components/ui/textarea"
 import { useState } from 'react'
 import { useSession } from '../auth/session'
 import { describe } from '../transactions/model'
