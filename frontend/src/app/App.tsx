@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { SessionProvider, useSession, RequireRole } from '../auth/session'
+import { transactionRoute } from '../transactions/routes'
 
 export function App() { return <SessionProvider><Page /></SessionProvider> }
 
@@ -31,7 +32,7 @@ function DevelopmentSession() {
       <p>{session.state.user.realName} · {session.state.user.role}</p>
       <p>{session.meta.hasUnreadMessages ? '안 읽은 쪽지 있음' : '안 읽은 쪽지 없음'} / {session.meta.hasUnreadNotifications ? '새 알림 있음' : '새 알림 없음'}</p>
       <button type="button" disabled={session.busy} onClick={() => void session.logout()}>로그아웃</button>
-      <nav aria-label="개발 확인"><a href="/">처음으로</a> · <a href="/market">직원 영역</a> · <a href="/admin">관리자 영역</a></nav>
+      <nav aria-label="개발 확인"><a href="/">처음으로</a> · <a href="/market">직원 영역</a> · <a href="/market/deals">내 신청·거래</a> · <a href="/admin">관리자 영역</a></nav>
     </> : null}
     {session.config?.developmentLogin ? <fieldset disabled={session.busy || session.state.status === 'loading'}><legend>테스트 계정 선택</legend>
       {session.config.accounts.map(account => <button key={account.key} type="button" onClick={() => void session.login(account.key)}>{account.label}로 로그인</button>)}
@@ -44,6 +45,8 @@ function RouteSlot() {
   const path = window.location.pathname
   if (path === '/admin') return <RequireRole role="HR_ADMIN"><AccessCheck admin /></RequireRole>
   if (path === '/market') return <RequireRole><AccessCheck /></RequireRole>
+  const transaction = transactionRoute(path)
+  if (transaction) return <RequireRole>{transaction}</RequireRole>
   if (path !== '/') return <p role="alert">아직 제공하지 않는 화면입니다.</p>
   return null
 }
