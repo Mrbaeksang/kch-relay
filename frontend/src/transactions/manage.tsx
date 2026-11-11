@@ -31,7 +31,7 @@ export function ProductManage({ productId }: { productId: string }) {
   const { product } = data
   const closed = product.recruitmentClosed
   return <section aria-labelledby="manage-title" className="product-manage">
-    <h2 id="manage-title">상품 관리 · {product.title}</h2>
+    <h1 id="manage-title">상품 관리 · {product.title}</h1>
     <p>{won(product.unitPrice)} · 잔여 {product.remainingQuantity}개 · {closed ? '모집 종료' : '모집 중'}{product.hidden ? ' · 숨김' : ''} · 대기 신청 {product.pendingApplicationCount}건</p>
     {notice ? <p role="status">{notice}</p> : null}
     {error ? <p role="alert">{error}</p> : null}

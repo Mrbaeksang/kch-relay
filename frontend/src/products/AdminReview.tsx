@@ -27,7 +27,7 @@ export function AdminReview() {
   useEffect(() => { void load(status) }, [load, status])
 
   return <section aria-labelledby="review-title" className="products-page">
-    <h2 id="review-title">상품 심사</h2>
+    <h1 id="review-title">상품 심사</h1>
     <div role="group" aria-label="심사 상태">
       {(['PENDING', 'REJECTED', 'APPROVED'] as const).map(value => <Button key={value} type="button" aria-pressed={status === value} onClick={() => { setStatus(value); setSelected(null) }}>{statusLabel[value]}</Button>)}
     </div>
