@@ -15,14 +15,16 @@ Docker 다단계 빌드에서 React/Vite 화면과 Go 실행 파일을 만든다
 | 변수 | 운영 값 |
 | --- | --- |
 | APP_ENV | production |
-| AUTH_MODE | disabled |
+| AUTH_MODE | google (자격 증명 등록 및 해당 구현 배포 후 전환) |
 | APP_ORIGIN | https://kch-relay-production.up.railway.app |
 | PORT | 8080 |
 | DATABASE_PATH | /data/market.db |
 | UPLOAD_DIR | /data/uploads |
 | WEB_DIR | /app/frontend/dist |
 
-현재 운영 구글 인증은 후속 작업이다. `AUTH_MODE=disabled`에서는 직원용 API가 401을 반환하며 개발 계정이 생성되지 않는다. 공개 서비스에 개발 로그인을 켜지 않는다. OAuth 구현과 콘솔 자격 증명 연결 이후 인증 모드를 전환한다. 가입 승인·부서 관리도 별도 기능 작업이다.
+구글 로그인 운영에는 `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `GOOGLE_REDIRECT_URI`가 필요하다. 콜백은 `APP_ORIGIN + /api/v1/auth/google/callback`과 정확히 같아야 한다. 실제 시크릿은 Railway 변수에만 보관한다. 이전 이미지에서는 google 모드로 시작할 수 없으므로 최초 전환은 구현 이미지 배포 성공 후 수행한다. 개발 로그인은 운영에서 허용하지 않는다.
+
+최초 관리자는 실제 Google 로그인 → 인사팀 선택 → 가입 신청까지 완료한 뒤 운영자가 컨테이너에서 `./bootstrap-admin --email '정확한 구글 이메일'`을 실행한다. 활성 관리자가 이미 있거나 해당 이메일의 인사팀 승인 대기 신청이 없으면 실패한다. 이 명령은 HTTP로 노출되지 않는다. 이후에는 관리자 화면에서 승인한다. 관리자 부서는 이름이 아닌 고정 지정으로 구분한다.
 
 ## GitHub CI/CD
 
@@ -54,3 +56,8 @@ Go는 SIGTERM을 받으면 최대 10초 동안 요청을 정리한다. Railway�
 - [볼륨과 pre-deploy 제약](https://docs.railway.com/volumes)
 - [볼륨 복제본·배포 중단 제약](https://docs.railway.com/volumes/reference)
 - [지원 리전](https://docs.railway.com/deployments/regions)
+
+
+### 마이그레이션과 PR #28
+
+가입 확장은 `00004_google_membership.sql`이다. 별도 열린 PR #28은 이 작업에서 변경·병합하지 않는다. 나중에 #28을 통합할 때 이미 배포된 마이그레이션보다 번호가 작아지지 않도록 해당 PR의 신규 00003 마이그레이션을 당시 최신 번호 다음으로 옮기고 업그레이드를 검사한다.

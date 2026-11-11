@@ -25,13 +25,14 @@ type Service struct {
 	config config.Config
 	now    func() time.Time
 	meta   httpx.MetaProvider
+	google *googleAuth
 }
 
 func New(db *sql.DB, c config.Config, now func() time.Time) (*Service, error) {
 	if c.AuthMode == "development" && c.AppEnv != "development" {
 		return nil, errors.New("development authentication is forbidden outside development")
 	}
-	if c.AuthMode != "" && c.AuthMode != "disabled" && c.AuthMode != "development" {
+	if c.AuthMode != "" && c.AuthMode != "disabled" && c.AuthMode != "development" && c.AuthMode != "google" {
 		return nil, errors.New("authentication mode is not implemented")
 	}
 	if c.AuthMode == "" {
@@ -44,6 +45,12 @@ func New(db *sql.DB, c config.Config, now func() time.Time) (*Service, error) {
 		now = time.Now
 	}
 	s := &Service{db: db, config: c, now: now}
+	if c.AuthMode == "google" {
+		if c.GoogleClientID == "" || c.GoogleClientSecret == "" || c.AppOrigin == "" || c.GoogleRedirectURI != c.AppOrigin+"/api/v1/auth/google/callback" {
+			return nil, errors.New("Google credentials and redirect URI are required")
+		}
+		s.google = newGoogleAuth(c)
+	}
 	s.meta = func(ctx context.Context, user string) (httpx.Meta, error) { return database.UnreadMeta(ctx, db, user) }
 	return s, nil
 }
@@ -53,7 +60,7 @@ func tokenHash(token string) string {
 }
 func (s *Service) Authenticate(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if s.config.AuthMode != "development" {
+		if s.config.AuthMode == "disabled" {
 			next.ServeHTTP(w, r)
 			return
 		}
@@ -69,7 +76,7 @@ func (s *Service) Authenticate(next http.Handler) http.Handler {
 		if len(cookie.Value) != 64 {
 			err = sql.ErrNoRows
 		} else {
-			err = s.db.QueryRowContext(r.Context(), `SELECT u.id,u.real_name,u.department,u.job_level,u.role,u.status,s.id,s.csrf_token,s.expires_at,s.revoked_at FROM sessions s JOIN users u ON u.id=s.user_id WHERE s.token_hash=?`, tokenHash(cookie.Value)).Scan(&a.ID, &a.RealName, &a.Department, &a.JobLevel, &a.Role, &a.Status, &current.ID, &current.CSRF, &expires, &revoked)
+			err = s.db.QueryRowContext(r.Context(), `SELECT u.id,u.real_name,u.department,u.job_level,u.role,CASE WHEN u.status='SUSPENDED' THEN u.status ELSE u.membership_status END,s.id,s.csrf_token,s.expires_at,s.revoked_at FROM sessions s JOIN users u ON u.id=s.user_id WHERE s.token_hash=?`, tokenHash(cookie.Value)).Scan(&a.ID, &a.RealName, &a.Department, &a.JobLevel, &a.Role, &a.Status, &current.ID, &current.CSRF, &expires, &revoked)
 		}
 		var failure error
 		switch {
@@ -86,7 +93,7 @@ func (s *Service) Authenticate(next http.Handler) http.Handler {
 			}
 			if revoked.Valid || !s.now().Before(deadline) {
 				failure = httpx.Error(401, "SESSION_EXPIRED", "로그인이 만료되었습니다.")
-			} else if a.Status != "ACTIVE" {
+			} else if a.Status == "SUSPENDED" {
 				failure = httpx.Error(403, "ACCOUNT_SUSPENDED", "이용이 제한된 계정입니다.")
 			}
 		}
@@ -121,13 +128,18 @@ func (s *Service) Register(r chi.Router) {
 		if s.config.AuthMode == "development" {
 			accounts = database.DevelopmentAccounts()
 		}
-		return httpx.Result{Data: map[string]any{"authMode": s.config.AuthMode, "developmentLogin": s.config.AuthMode == "development", "accounts": accounts}}, nil
+		return httpx.Result{Data: map[string]any{"authMode": s.config.AuthMode, "developmentLogin": s.config.AuthMode == "development", "accounts": accounts, "googleLogin": s.config.AuthMode == "google"}}, nil
 	}, s.meta))
 	if s.config.AuthMode == "development" {
 		r.Post("/auth/development-login", httpx.Adapt(s.login, s.meta))
 	}
-	r.Get("/auth/me", httpx.Adapt(httpx.RequireUser(s.me), s.meta))
-	r.Post("/auth/logout", httpx.Adapt(httpx.RequireUser(s.logout), s.meta))
+	r.Get("/auth/me", httpx.Adapt(s.requireSession(s.me), s.meta))
+	r.Post("/auth/logout", httpx.Adapt(s.requireSession(s.logout), s.meta))
+	s.registerOnboarding(r)
+	if s.google != nil {
+		r.Get("/auth/google/start", s.googleStart)
+		r.Get("/auth/google/callback", s.googleCallback)
+	}
 	r.Get("/access", httpx.Adapt(httpx.RequireUser(s.access), s.meta))
 	r.Get("/admin/access", httpx.Adapt(httpx.RequireAdmin(s.access), s.meta))
 	r.NotFound(func(w http.ResponseWriter, r *http.Request) {

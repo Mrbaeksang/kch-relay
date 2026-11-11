@@ -7,7 +7,7 @@ import (
 
 func clean(t *testing.T) {
 	t.Helper()
-	for _, key := range []string{"APP_ENV", "AUTH_MODE", "PORT", "DATABASE_PATH", "UPLOAD_DIR", "WEB_DIR", "APP_ORIGIN", "SESSION_TTL"} {
+	for _, key := range []string{"APP_ENV", "AUTH_MODE", "PORT", "DATABASE_PATH", "UPLOAD_DIR", "WEB_DIR", "APP_ORIGIN", "SESSION_TTL", "GOOGLE_CLIENT_ID", "GOOGLE_CLIENT_SECRET", "GOOGLE_REDIRECT_URI"} {
 		t.Setenv(key, "")
 	}
 }
@@ -43,5 +43,21 @@ func TestInvalidSettingsFailBeforeStartup(t *testing.T) {
 				t.Fatal("invalid setting accepted")
 			}
 		})
+	}
+}
+
+func TestGoogleConfigRequiresExactCallback(t *testing.T) {
+	clean(t)
+	t.Setenv("AUTH_MODE", "google")
+	t.Setenv("APP_ORIGIN", "https://market.example.org")
+	t.Setenv("GOOGLE_CLIENT_ID", "client")
+	t.Setenv("GOOGLE_CLIENT_SECRET", "secret")
+	t.Setenv("GOOGLE_REDIRECT_URI", "https://market.example.org/api/v1/auth/google/callback")
+	if _, err := LoadConfig(); err != nil {
+		t.Fatal(err)
+	}
+	t.Setenv("GOOGLE_REDIRECT_URI", "https://other.example.org/api/v1/auth/google/callback")
+	if _, err := LoadConfig(); err == nil {
+		t.Fatal("mismatched callback accepted")
 	}
 }

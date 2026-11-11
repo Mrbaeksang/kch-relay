@@ -147,6 +147,9 @@ func RequireUser(next Handler) Handler {
 			return Result{}, Error(401, "UNAUTHENTICATED", "로그인이 필요합니다.")
 		}
 		if a.Status != "ACTIVE" {
+			if a.Status != "SUSPENDED" {
+				return Result{}, Error(403, "MEMBERSHIP_REQUIRED", "가입 승인이 필요합니다.")
+			}
 			return Result{}, Error(403, "ACCOUNT_SUSPENDED", "이용이 제한된 계정입니다.")
 		}
 		return next(r)
