@@ -179,3 +179,11 @@ test('이전 검색의 늦은 응답이 새 검색을 덮지 않는다', async (
   )
   expect(screen.getByRole('link', { name: /새 검색 결과/ })).toBeTruthy()
 })
+
+test('본인의 심사 대기 상품은 내 상품과 승인 대기 상태로 표시한다',async()=>{
+ transport(()=>Response.json({data:{items:[{...product,isOwn:true,approvalStatus:'PENDING',canApply:false}],nextCursor:null}}))
+ render(<SessionProvider><CatalogList/></SessionProvider>)
+ await screen.findByText('승인 대기')
+ expect(screen.getByText(/내 상품 · 남은 수량/)).toBeTruthy()
+ expect(screen.queryByText('판매 중')).toBeNull()
+})

@@ -11,6 +11,8 @@ import { Skeleton } from '@/components/ui/skeleton'
 
 export type Product = {
   id: string
+  isOwn?: boolean
+  approvalStatus?: 'PENDING' | 'APPROVED' | 'REJECTED'
   title: string
   description: string
   unitPrice: number
@@ -31,6 +33,8 @@ export function price(value: number) {
   return value === 0 ? '나눔 · 0원' : `${money.format(value)}원`
 }
 function status(p: Product) {
+  if (p.approvalStatus === 'PENDING') return '승인 대기'
+  if (p.approvalStatus === 'REJECTED') return '반려'
   return p.recruitmentClosed
     ? '모집 종료'
     : p.remainingQuantity === 0
@@ -42,7 +46,7 @@ function ProductStatus({ product }: { product: Product }) {
     <Badge
       variant="secondary"
       className={
-        product.recruitmentClosed || product.remainingQuantity === 0
+        product.approvalStatus === 'PENDING' || product.approvalStatus === 'REJECTED' || product.recruitmentClosed || product.remainingQuantity === 0
           ? ''
           : 'bg-success-surface text-success'
       }
@@ -113,13 +117,15 @@ function Photo({
       </div>
     )
   return (
-    <img
-      src={image.url}
-      alt={title}
-      className={className}
-      loading="lazy"
-      onError={() => setFailed(true)}
-    />
+    <div className={`relative overflow-hidden ${className}`}>
+      <img
+        src={image.url}
+        alt={title}
+        className="absolute inset-0 h-full w-full object-contain p-3"
+        loading="lazy"
+        onError={() => setFailed(true)}
+      />
+    </div>
   )
 }
 
@@ -229,7 +235,7 @@ export function CatalogList() {
                         key={product.images[0].id}
                         image={product.images[0]}
                         title=""
-                        className="aspect-[4/3] w-full rounded-xl bg-muted object-cover"
+                        className="aspect-[4/3] w-full rounded-xl bg-muted"
                       />
                     ) : (
                       <div className="flex aspect-[4/3] flex-col justify-center gap-2 rounded-xl bg-muted p-4">
@@ -250,7 +256,7 @@ export function CatalogList() {
                         {price(product.unitPrice)}
                       </p>
                       <p className="mt-1 text-sm text-muted-foreground">
-                        {product.seller.label} · 남은 수량{' '}
+                        {product.isOwn ? '내 상품' : product.seller.label} · 남은 수량{' '}
                         {money.format(product.remainingQuantity)}
                       </p>
                     </div>
@@ -341,7 +347,7 @@ export function ProductDetail({ productId }: { productId: string }) {
                   key={image.id}
                   image={image}
                   title={`${resource.data.title} 사진 ${i + 1}`}
-                  className="max-h-[560px] w-full rounded-xl bg-muted object-contain"
+                  className="aspect-[4/3] max-h-[70vh] w-full rounded-xl bg-muted"
                 />
               ))}
             </div>
@@ -354,7 +360,7 @@ export function ProductDetail({ productId }: { productId: string }) {
             </p>
             <dl className="mt-6 grid grid-cols-[auto_1fr] gap-x-6 gap-y-2 text-sm">
               <dt className="text-muted-foreground">판매자</dt>
-              <dd>{resource.data.seller.label}</dd>
+              <dd>{resource.data.isOwn ? '내 상품' : resource.data.seller.label}</dd>
               <dt className="text-muted-foreground">남은 수량</dt>
               <dd className="tabular-nums">
                 {money.format(resource.data.remainingQuantity)}
@@ -375,6 +381,7 @@ export function ProductDetail({ productId }: { productId: string }) {
                 {resource.data.description}
               </p>
             </div>
+            {resource.data.isOwn ? <div className="mt-6 space-y-3"><Button asChild variant="outline"><a href={`/market/products/${encodeURIComponent(resource.data.id)}/manage`}>내 상품 관리</a></Button>{resource.data.approvalStatus !== 'APPROVED' ? <p className="text-sm text-muted-foreground">인사팀 승인 전에는 본인에게만 보입니다.</p> : null}</div> : null}
             {resource.data.canApply ? <div className="mt-8"><ApplyForm productId={resource.data.id} /></div> : null}
               <div className="mt-8 rounded-lg bg-muted p-4 text-sm text-muted-foreground">
               <p>
