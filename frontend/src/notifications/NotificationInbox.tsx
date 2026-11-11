@@ -1,3 +1,4 @@
+import { Button } from "@/components/ui/button"
 import { useCallback, useEffect, useRef, useState, type MouseEvent } from 'react'
 import { useSession } from '../auth/session'
 import { APIError } from '../lib/api'
@@ -7,7 +8,7 @@ type NotificationPage = { items: Notification[]; nextCursor: string | null }
 type Props = { navigate?: (path: string) => void; pageSize?: number }
 
 // 거래 상세 화면(기능 3 담당)의 경로. 알림은 상품이 아니라 본인 거래 기록으로 연결한다.
-export const dealPath = (dealId: string) => `/deals/${encodeURIComponent(dealId)}`
+export const dealPath = (dealId: string) => `/market/deals/${encodeURIComponent(dealId)}`
 
 const messages: Record<string, string> = { APPLICATION_REJECTED: '판매자가 거래 신청을 거절했어요.' }
 const timeFormat = new Intl.DateTimeFormat('ko-KR', { timeZone: 'Asia/Seoul', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' })
@@ -94,11 +95,11 @@ export function NotificationInbox({ navigate = path => window.location.assign(pa
     {status === 'loading' ? <p aria-live="polite">알림을 불러오고 있어요.</p> : null}
     {status === 'error' ? <div role="alert">
       <p>알림을 불러오지 못했어요. 연결을 확인하고 다시 시도해 주세요.</p>
-      <button type="button" onClick={() => loadFirst()}>다시 시도</button>
+      <Button type="button" onClick={() => loadFirst()}>다시 시도</Button>
     </div> : null}
     {itemError ? <div role="alert">
       <p>{itemError}</p>
-      <button type="button" onClick={() => loadFirst()}>새로고침</button>
+      <Button type="button" onClick={() => loadFirst()}>새로고침</Button>
     </div> : null}
     {status === 'ready' && items.length === 0 ? <p>아직 받은 알림이 없어요.</p> : null}
     {status === 'ready' && items.length > 0 ? <ul className="notification-list">
@@ -110,7 +111,7 @@ export function NotificationInbox({ navigate = path => window.location.assign(pa
         </a>
       </li>)}
     </ul> : null}
-    {status === 'ready' && nextCursor ? <button type="button" disabled={loadingMore} onClick={() => void loadMore()}>{loadingMore ? '불러오는 중…' : '더 보기'}</button> : null}
+    {status === 'ready' && nextCursor ? <Button type="button" disabled={loadingMore} onClick={() => void loadMore()}>{loadingMore ? '불러오는 중…' : '더 보기'}</Button> : null}
     {moreError ? <p role="alert">다음 알림을 불러오지 못했어요. 더 보기를 다시 눌러 주세요.</p> : null}
   </section>
 }

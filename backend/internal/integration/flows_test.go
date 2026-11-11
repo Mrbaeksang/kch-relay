@@ -19,6 +19,7 @@ import (
 	"github.com/Mrbaeksang/kch-relay/backend/internal/application"
 	"github.com/Mrbaeksang/kch-relay/backend/internal/catalog"
 	"github.com/Mrbaeksang/kch-relay/backend/internal/config"
+	"github.com/Mrbaeksang/kch-relay/backend/internal/notifications"
 	"github.com/Mrbaeksang/kch-relay/backend/internal/product"
 	"github.com/Mrbaeksang/kch-relay/backend/internal/transactions"
 )
@@ -34,7 +35,7 @@ func setup(t *testing.T) (*client, *client, *client) {
 	t.Helper()
 	dir := t.TempDir()
 	c := config.Config{AppEnv: "development", AuthMode: "development", AppOrigin: "http://relay.test", SessionTTL: 8 * time.Hour, DatabasePath: filepath.Join(dir, "market.db"), UploadDir: filepath.Join(dir, "uploads"), WebDir: dir}
-	app, err := application.New(context.Background(), c, catalog.Register, product.Module, transactions.Module(func(ctx context.Context, tx *sql.Tx, p, s string, ids []string, _ time.Time) error {
+	app, err := application.New(context.Background(), c, notifications.Module(nil), catalog.Register, product.Module, transactions.Module(func(ctx context.Context, tx *sql.Tx, p, s string, ids []string, _ time.Time) error {
 		return product.AttachImagesTx(ctx, tx, p, s, ids)
 	}))
 	if err != nil {
@@ -152,5 +153,29 @@ func TestRegistrationPhotoEditAndDealAgreement(t *testing.T) {
 	b.do(404, "GET", path, nil)
 	if b.do(200, "GET", "/deals/"+id, nil)["status"] != "COMPLETED" {
 		t.Fatal("hidden record lost")
+	}
+}
+
+func TestHiddenProductRejectionReachesNotificationInbox(t *testing.T) {
+	a, b, admin := setup(t)
+	p := a.do(201, "POST", "/products", map[string]any{"title": "가상 나눔", "description": "가상 통합 테스트", "unitPrice": 0, "quantity": 1})["id"].(string)
+	admin.do(200, "POST", "/admin/products/"+p+"/approve", map[string]any{})
+	d := b.do(201, "POST", "/products/"+p+"/deals", map[string]int{"quantity": 1})["id"].(string)
+	a.do(200, "DELETE", "/products/"+p, nil)
+	inbox := b.do(200, "GET", "/me/notifications", nil)["items"].([]any)
+	if len(inbox) != 1 {
+		t.Fatal(inbox)
+	}
+	n := inbox[0].(map[string]any)
+	if n["dealId"] != d || n["readAt"] != nil {
+		t.Fatal(n)
+	}
+	read := b.do(200, "POST", "/me/notifications/"+n["id"].(string)+"/read", nil)
+	if read["readAt"] == nil {
+		t.Fatal("read not saved")
+	}
+	record := b.do(200, "GET", "/deals/"+d, nil)
+	if record["status"] != "REJECTED" || record["product"].(map[string]any)["hidden"] != true {
+		t.Fatal(record)
 	}
 }

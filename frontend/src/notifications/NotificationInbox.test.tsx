@@ -76,7 +76,7 @@ test('안 읽은 알림을 누르면 읽음 처리 후 해당 거래로 이동�
   notices = [notice(3)]
   const navigate = renderInbox()
   fireEvent.click(await screen.findByRole('link', { name: /판매자가 거래 신청을 거절했어요/ }))
-  await waitFor(() => expect(navigate).toHaveBeenCalledWith('/deals/deal-3'))
+  await waitFor(() => expect(navigate).toHaveBeenCalledWith('/market/deals/deal-3'))
   const read = calls.find(c => c.method === 'POST')
   expect(read).toMatchObject({ path: '/api/v1/me/notifications/n3/read', csrf: 'csrf' })
   expect(screen.getByTestId('probe').textContent).toBe('새 알림 없음')
@@ -87,7 +87,7 @@ test('이미 읽은 알림은 다시 읽음 요청 없이 거래로 이동한다
   const navigate = renderInbox()
   await waitFor(() => expect(items()).toHaveLength(3))
   fireEvent.click(within(items()[1]).getByRole('link'))
-  expect(navigate).toHaveBeenCalledWith('/deals/deal-2')
+  expect(navigate).toHaveBeenCalledWith('/market/deals/deal-2')
   expect(calls.some(c => c.method === 'POST')).toBe(false)
 })
 
@@ -131,7 +131,7 @@ test('읽음 처리에 실패해도 거래로 이동하고 알림은 안 읽음�
   await waitFor(() => expect(items()).toHaveLength(1))
   mode = 'readFails'
   fireEvent.click(within(items()[0]).getByRole('link'))
-  await waitFor(() => expect(navigate).toHaveBeenCalledWith('/deals/deal-3'))
+  await waitFor(() => expect(navigate).toHaveBeenCalledWith('/market/deals/deal-3'))
   expect(within(items()[0]).getByText('안 읽음')).toBeTruthy()
 })
 
