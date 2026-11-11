@@ -8,6 +8,7 @@ import (
 	"syscall"
 
 	"github.com/Mrbaeksang/kch-relay/backend/internal/application"
+	"github.com/Mrbaeksang/kch-relay/backend/internal/catalog"
 	"github.com/Mrbaeksang/kch-relay/backend/internal/config"
 )
 
@@ -24,7 +25,7 @@ func run() error {
 	}
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()
-	app, err := application.New(ctx, c)
+	app, err := application.New(ctx, c, catalog.Register)
 	if err != nil {
 		return err
 	}
