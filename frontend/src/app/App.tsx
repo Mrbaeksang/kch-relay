@@ -1,3 +1,4 @@
+import { NotificationInbox } from "../notifications/NotificationInbox"
 import { transactionRoute } from "../transactions/routes"
 import { MyProducts } from "../products/MyProducts"
 import { AdminReview } from "../products/AdminReview"
@@ -48,6 +49,7 @@ function Page() {
             </Button>
             <Button variant="ghost" asChild><a href="/me/products">내 상품</a></Button>
           <Button variant="ghost" asChild><a href="/market/deals">내 신청·거래</a></Button>
+          <Button variant="ghost" asChild><a href="/notifications">알림함{session.meta.hasUnreadNotifications?<span aria-label="새 알림 있음" className="size-2 rounded-full bg-destructive"/>:null}</a></Button>
           {session.state.status === 'authenticated' &&
             session.state.user.role === 'HR_ADMIN' ? (
               <Button variant="ghost" asChild>
@@ -195,6 +197,7 @@ function DevelopmentSession() {
 // Future feature tickets add their screen entry points here; auth stays in the shared provider.
 function RouteSlot() {
   const path = window.location.pathname
+  if (path === "/notifications") return <RequireRole><NotificationInbox /></RequireRole>
   const transaction = transactionRoute(path)
   if (transaction) return <RequireRole>{transaction}</RequireRole>
   if (path === '/' || path === '/market')

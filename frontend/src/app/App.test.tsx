@@ -67,3 +67,16 @@ test('장터 조회 중 세션이 만료되면 내용을 감추고 재로그인�
   await screen.findByText('로그인이 만료되었습니다. 다시 로그인해 주세요.')
   expect(screen.queryByRole('searchbox')).toBeNull()
 })
+
+test('로그인한 직원은 메뉴에서 알림함으로 가고 새 알림 표시를 본다', async () => {
+  vi.stubGlobal('fetch', async (input: RequestInfo | URL) => {
+    const path = String(input)
+    if (path.endsWith('/auth/config')) return Response.json({ data: { authMode: 'development', developmentLogin: true, accounts: [] } })
+    if (path.endsWith('/auth/me')) return Response.json({ data: { user: { id: 'dev-employee-b', realName: '테스트 직원 B', department: 'TEST_DEPT', jobLevel: 'TEST_LEVEL', role: 'MEMBER', status: 'ACTIVE' }, csrfToken: 'csrf' }, meta: { hasUnreadMessages: false, hasUnreadNotifications: true } })
+    return Response.json({ error: { code: 'NOT_FOUND' } }, { status: 404 })
+  })
+  render(<App />)
+  const link = await screen.findByRole('link', { name: /알림함/ })
+  expect(link.getAttribute('href')).toBe('/notifications')
+  expect(screen.getByLabelText('새 알림 있음')).toBeTruthy()
+})

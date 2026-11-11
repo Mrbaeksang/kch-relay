@@ -140,3 +140,15 @@
 .my-deals select { min-height:44px; border:1px solid var(--input); padding:8px; border-radius:var(--radius-md); }
 .deal-detail a,.seller-deals a,.my-deals a { text-decoration:underline; text-underline-offset:4px; }
 }
+
+@layer components {
+.notification-inbox { padding-block:32px; }
+.notification-hint { margin-block:12px 24px; color:var(--muted-foreground); font-size:14px; }
+.notification-list li { border-bottom:1px solid var(--border); }
+.notification-list a { display:flex; flex-wrap:wrap; gap:8px 16px; padding:20px 8px; border-radius:var(--radius-md); }
+.notification-list a:hover { background:var(--muted); }
+.notification-message { flex:1 1 260px; }
+.notification-list .unread .notification-message { font-weight:600; }
+.notification-list time { color:var(--muted-foreground); font-size:14px; }
+.notification-unread { color:var(--destructive); font-size:12px; font-weight:600; }
+}
