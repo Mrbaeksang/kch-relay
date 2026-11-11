@@ -9,6 +9,7 @@ import (
 
 	"github.com/Mrbaeksang/kch-relay/backend/internal/application"
 	"github.com/Mrbaeksang/kch-relay/backend/internal/config"
+	"github.com/Mrbaeksang/kch-relay/backend/internal/notifications"
 	"github.com/Mrbaeksang/kch-relay/backend/internal/statistics"
 )
 
@@ -25,7 +26,7 @@ func run() error {
 	}
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()
-	app, err := application.New(ctx, c, statistics.Register)
+	app, err := application.New(ctx, c, notifications.Module(nil), statistics.Register)
 	if err != nil {
 		return err
 	}

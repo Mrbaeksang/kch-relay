@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { SessionProvider, useSession, RequireRole } from '../auth/session'
+import { NotificationInbox } from '../notifications/NotificationInbox'
 import { CompletedDealStatistics } from '../statistics/CompletedDealStatistics'
 
 export function App() { return <SessionProvider><Page /></SessionProvider> }
@@ -32,7 +33,7 @@ function DevelopmentSession() {
       <p>{session.state.user.realName} · {session.state.user.role}</p>
       <p>{session.meta.hasUnreadMessages ? '안 읽은 쪽지 있음' : '안 읽은 쪽지 없음'} / {session.meta.hasUnreadNotifications ? '새 알림 있음' : '새 알림 없음'}</p>
       <button type="button" disabled={session.busy} onClick={() => void session.logout()}>로그아웃</button>
-      <nav aria-label="개발 확인"><a href="/">처음으로</a> · <a href="/market">직원 영역</a> · <a href="/admin">관리자 영역</a> · <a href="/admin/statistics">거래 완료 통계</a></nav>
+      <nav aria-label="개발 확인"><a href="/">처음으로</a> · <a href="/market">직원 영역</a> · <a href="/admin">관리자 영역</a> · <a href="/admin/statistics">거래 완료 통계</a> · <a href="/notifications">알림함{session.meta.hasUnreadNotifications ? <span className="unread-dot" aria-label="새 알림 있음" /> : null}</a></nav>
     </> : null}
     {session.config?.developmentLogin ? <fieldset disabled={session.busy || session.state.status === 'loading'}><legend>테스트 계정 선택</legend>
       {session.config.accounts.map(account => <button key={account.key} type="button" onClick={() => void session.login(account.key)}>{account.label}로 로그인</button>)}
@@ -46,6 +47,7 @@ function RouteSlot() {
   if (path === '/admin') return <RequireRole role="HR_ADMIN"><AccessCheck admin /></RequireRole>
   if (path === '/admin/statistics') return <RequireRole role="HR_ADMIN"><CompletedDealStatistics /></RequireRole>
   if (path === '/market') return <RequireRole><AccessCheck /></RequireRole>
+  if (path === '/notifications') return <RequireRole><NotificationInbox /></RequireRole>
   if (path !== '/') return <p role="alert">아직 제공하지 않는 화면입니다.</p>
   return null
 }
