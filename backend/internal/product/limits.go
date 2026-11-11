@@ -10,7 +10,7 @@ const (
 	MaxQuantity          = int64(10_000)
 	MaxImagesPerProduct  = 5
 	MaxImageBytes        = int64(5 << 20)
-	MaxImagePixels       = 16_000_000 // ~64MB while decoding; phone photos are resized in the browser first
+	MaxImagePixels       = 4_000_000 // ~16MB while decoding; phone photos are resized in the browser first
 	MaxImageSide         = 8_000
 	MaxUnlinkedUploads   = 20 // per uploader, limits disk use by abandoned uploads
 	MaxReasonLength      = 500

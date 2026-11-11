@@ -18,14 +18,15 @@ import (
 )
 
 type module struct {
-	db        *sql.DB
-	uploadDir string
-	now       func() time.Time
+	db         *sql.DB
+	uploadDir  string
+	now        func() time.Time
+	uploadSlot chan struct{}
 }
 
 // Module registers product, photo and review routes on the authenticated API router.
 func Module(r chi.Router, d application.Dependencies) {
-	m := &module{db: d.DB, uploadDir: d.Config.UploadDir, now: time.Now}
+	m := &module{db: d.DB, uploadDir: d.Config.UploadDir, now: time.Now, uploadSlot: make(chan struct{}, 1)}
 	a := func(h httpx.Handler) http.HandlerFunc { return httpx.Adapt(h, d.Meta) }
 	admin := func(h httpx.Handler) http.HandlerFunc { return a(httpx.RequireAdmin(h)) }
 

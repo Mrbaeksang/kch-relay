@@ -20,6 +20,7 @@ import (
 	"time"
 
 	"github.com/Mrbaeksang/kch-relay/backend/internal/application"
+	"github.com/Mrbaeksang/kch-relay/backend/internal/catalog"
 	"github.com/Mrbaeksang/kch-relay/backend/internal/config"
 	"github.com/Mrbaeksang/kch-relay/backend/internal/database"
 	"github.com/Mrbaeksang/kch-relay/backend/internal/product"
@@ -39,7 +40,7 @@ func start(t *testing.T, dir string) *env {
 	t.Helper()
 	cfg := config.Config{AppEnv: "development", AuthMode: "development", Port: "0", AppOrigin: origin, SessionTTL: 8 * time.Hour,
 		DatabasePath: filepath.Join(dir, "market.db"), UploadDir: filepath.Join(dir, "uploads"), WebDir: dir}
-	app, err := application.New(context.Background(), cfg, product.Module)
+	app, err := application.New(context.Background(), cfg, catalog.Register, product.Module)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -460,5 +461,38 @@ func TestParticipantsIdentityIsAdminOnly(t *testing.T) {
 	}
 	if status, body := admin.do("GET", "/admin/products?approvalStatus=WRONG", nil); status != 400 {
 		t.Fatal("invalid filter", status, body)
+	}
+}
+
+func TestApprovedRegistrationReachesAnonymousCatalog(t *testing.T) {
+	e := start(t, t.TempDir())
+	a, b, admin := e.login("dev-employee-a"), e.login("dev-employee-b"), e.login("dev-admin")
+	photo := a.uploadID(pngBytes(t))
+	status, body := a.do("POST", "/products", valid(photo))
+	if status != 201 {
+		t.Fatal(status, body)
+	}
+	id := data(body)["id"].(string)
+	if status, _ := b.do("GET", "/products/"+id, nil); status != 404 {
+		t.Fatalf("pending exposed %d", status)
+	}
+	if status, body := admin.do("POST", "/admin/products/"+id+"/approve", map[string]any{}); status != 200 {
+		t.Fatal(status, body)
+	}
+	status, body = b.do("GET", "/products", nil)
+	if status != 200 || len(items(body)) != 1 {
+		t.Fatal(status, body)
+	}
+	status, body = b.do("GET", "/products/"+id, nil)
+	if status != 200 {
+		t.Fatal(status, body)
+	}
+	p := data(body)
+	if p["seller"].(map[string]any)["label"] != "판매자" || p["canApply"] != true {
+		t.Fatal(p)
+	}
+	photos := p["images"].([]any)
+	if len(photos) != 1 || photos[0].(map[string]any)["id"] != photo || b.imageStatus(photo) != 200 {
+		t.Fatal(p)
 	}
 }

@@ -148,6 +148,13 @@ func sanitize(content []byte) ([]byte, string, error) {
 }
 
 func (m *module) upload(r *http.Request) (httpx.Result, error) {
+	// Serialize decoding to keep peak image memory bounded on the single small service.
+	select {
+	case m.uploadSlot <- struct{}{}:
+		defer func() { <-m.uploadSlot }()
+	case <-r.Context().Done():
+		return httpx.Result{}, r.Context().Err()
+	}
 	actor, _ := httpx.CurrentUser(r.Context())
 	content, err := readUpload(r)
 	if err != nil {

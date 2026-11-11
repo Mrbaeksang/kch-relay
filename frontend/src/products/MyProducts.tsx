@@ -1,3 +1,6 @@
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Textarea } from "@/components/ui/textarea"
 import { useCallback, useEffect, useState } from 'react'
 import { useSession } from '../auth/session'
 import { ProductForm } from './ProductForm'
@@ -12,14 +15,16 @@ export function MyProducts() {
   const [editing, setEditing] = useState<string | null>(null)
   const [creating, setCreating] = useState(false)
   const [notice, setNotice] = useState('')
+  const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
   const load = useCallback(async (cursor?: string) => {
+    setLoading(true); setError(null)
     try {
       const page = await api<Page<SellerProduct>>(`/me/products${cursor ? `?cursor=${encodeURIComponent(cursor)}` : ''}`)
       setProducts(current => cursor ? [...current, ...page.items] : page.items)
       setNextCursor(page.nextCursor)
-    } catch (failure) { setError(failure instanceof Error ? failure.message : '내 상품을 불러오지 못했습니다.') }
+    } catch (failure) { setError(failure instanceof Error ? failure.message : '내 상품을 불러오지 못했습니다.') } finally { setLoading(false) }
   }, [api])
   useEffect(() => {
     api<Limits>('/product-limits').then(setLimits).catch(() => setError('입력 기준을 불러오지 못했습니다.'))
@@ -41,13 +46,15 @@ export function MyProducts() {
     <h2 id="my-products-title">내 상품</h2>
     {error ? <p role="alert">{error}</p> : null}
     <p aria-live="polite">{notice}</p>
-    {limits && !creating ? <button type="button" onClick={() => { setCreating(true); setNotice('') }}>상품 등록</button> : null}
+    {limits && !creating ? <Button type="button" onClick={() => { setCreating(true); setNotice('') }}>상품 등록</Button> : null}
     {limits && creating ? <section aria-label="상품 등록">
       <h3>새 상품</h3>
       <p>등록하면 인사팀 심사를 거쳐 장터에 공개됩니다. 심사 전에는 다른 직원에게 보이지 않습니다.</p>
       <ProductForm limits={limits} submitLabel="등록하고 심사 요청" onSubmit={create} onCancel={() => setCreating(false)} />
     </section> : null}
-    {products.length === 0 ? <p>등록한 상품이 없습니다.</p> : <ul className="product-list">
+    {loading ? <p role="status">상품을 불러오고 있습니다.</p> : null}
+    {error ? <Button type="button" variant="outline" onClick={()=>void load()}>다시 시도</Button> : null}
+    {!loading && !error && products.length === 0 ? <p>등록한 상품이 없습니다.</p> : <ul className="product-list">
       {products.map(product => <li key={product.id}>
         <article aria-label={product.title}>
           <h3>{product.title} <span className="status">{statusLabel[product.approvalStatus]}</span></h3>
@@ -57,12 +64,12 @@ export function MyProducts() {
             <p role="note"><strong>반려 사유:</strong> {product.rejectionReason}</p>
             {editing === product.id && limits
               ? <ProductForm limits={limits} initial={product} submitLabel="수정하고 다시 심사 요청" onSubmit={input => resubmit(product.id, input)} onCancel={() => setEditing(null)} />
-              : <button type="button" onClick={() => { setEditing(product.id); setNotice('') }}>수정 후 다시 요청</button>}
+              : <Button type="button" onClick={() => { setEditing(product.id); setNotice('') }}>수정 후 다시 요청</Button>}
           </> : null}
           {product.approvalStatus === 'PENDING' ? <p>인사팀 심사를 기다리고 있습니다.</p> : null}
         </article>
       </li>)}
     </ul>}
-    {nextCursor ? <button type="button" onClick={() => void load(nextCursor)}>더 보기</button> : null}
+    {nextCursor ? <Button type="button" disabled={loading} onClick={() => void load(nextCursor)}>더 보기</Button> : null}
   </section>
 }
