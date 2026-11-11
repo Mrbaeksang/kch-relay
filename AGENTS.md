@@ -28,6 +28,12 @@
 
 Impeccable 사용·설치 버전·갱신은 docs/agents/impeccable.md를 따른다. 디자인 작업도 기존 PRD·익명성·승인 정책·최소 운영비 제약을 지킨다. 스킬 설치만으로 디자인 변경이나 운영 배포를 수행하지 않는다.
 
+## 프론트 UI 공통 규약
+
+- 화면 작업 전에 PRODUCT.md·DESIGN.md·docs/agents/frontend-ui.md를 읽는다. DESIGN.md는 앱 디자인 기준이며 공식 그룹 CI 규정과 구분한다.
+- Tailwind 의미 토큰·src/components/ui의 shadcn 공통 컴포넌트·Lucide 아이콘을 재사용한다. 화면별 UI 라이브러리·중복 Button·임의 색상 체계를 추가하지 않는다.
+- 공통 토큰·컴포넌트를 수정하면 DESIGN.md·사용 가이드·개발 전용 /design-system 예시도 함께 갱신한다. 모바일·키보드·오류·로딩·빈 상태를 확인한다.
+
 ## 실행·검사
 
 ```sh

@@ -1,0 +1,100 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-11-11T00:00:00Z",
+  "title": "Design System: KCH Relay",
+  "extensions": {
+    "motion": [
+      {
+        "name": "state",
+        "value": "150ms ease-out",
+        "purpose": "상태 전환; reduced-motion 존중"
+      }
+    ],
+    "breakpoints": [
+      {
+        "name": "sm",
+        "value": "640px"
+      },
+      {
+        "name": "md",
+        "value": "768px"
+      },
+      {
+        "name": "lg",
+        "value": "1024px"
+      }
+    ],
+    "colorMeta": {
+      "brand-sky": {
+        "role": "secondary",
+        "displayName": "KCH Sky Blue"
+      },
+      "brand-ocean": {
+        "role": "primary",
+        "displayName": "KCH Ocean Blue"
+      },
+      "brand-gray": {
+        "role": "neutral",
+        "displayName": "KCH Gray"
+      }
+    }
+  },
+  "components": [
+    {
+      "name": "주요 버튼",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "공식 Ocean Blue의 주요 버튼",
+      "html": "<button class=\"ds-button\">거래 신청</button>",
+      "css": ".ds-button{background:var(--primary);color:var(--primary-foreground);min-height:44px;padding:8px 16px;border:0;border-radius:8px;font:500 14px/1.5 var(--font-ui)}.ds-button:hover{opacity:.9}.ds-button:focus-visible{outline:2px solid var(--ring);outline-offset:3px}"
+    },
+    {
+      "name": "보조 버튼",
+      "kind": "button",
+      "refersTo": "button-outline",
+      "description": "보조 버튼의 공통 표현",
+      "html": "<button class=\"ds-outline\">돌아가기</button>",
+      "css": ".ds-outline{background:var(--background);color:var(--foreground);border:1px solid var(--border);border-radius:8px;min-height:44px;padding:8px 16px}.ds-outline:hover{background:var(--accent)}.ds-outline:focus-visible{outline:2px solid var(--ring);outline-offset:3px}"
+    },
+    {
+      "name": "입력",
+      "kind": "input",
+      "refersTo": "text-input",
+      "description": "입력의 공통 표현",
+      "html": "<label>상품 제목<input class=\"ds-input\" placeholder=\"상품 제목을 입력해 주세요\"></label>",
+      "css": ".ds-input{display:block;min-height:44px;border:1px solid var(--input);border-radius:8px;padding:8px 12px;background:var(--background);color:var(--foreground)}.ds-input:focus-visible{outline:2px solid var(--ring);outline-offset:3px}"
+    },
+    {
+      "name": "중립 상태",
+      "kind": "chip",
+      "refersTo": "badge-neutral",
+      "description": "중립 상태의 공통 표현",
+      "html": "<span class=\"ds-badge\">승인 대기</span>",
+      "css": ".ds-badge{display:inline-flex;padding:2px 8px;border-radius:9999px;background:var(--secondary);color:var(--secondary-foreground);font:500 12px/1.5 var(--font-ui)}"
+    },
+    {
+      "name": "판매 상태",
+      "kind": "chip",
+      "refersTo": "badge-success",
+      "description": "판매 상태의 공통 표현",
+      "html": "<span class=\"ds-success\">판매 중</span>",
+      "css": ".ds-success{display:inline-flex;padding:2px 8px;border-radius:9999px;background:var(--success-surface);color:var(--success);font:500 12px/1.5 var(--font-ui)}"
+    }
+  ],
+  "narrative": {
+    "northStar": "KCH 구성원이 물건과 서비스를 쉽고 가볍게 거래하는 장터.",
+    "overview": "사진·제목·가격과 다음 행동이 먼저 보이는 밝고 단정한 업무 화면을 만든다.",
+    "keyCharacteristics": [
+      "밝은 배경과 진한 글자",
+      "콘텐츠 중심",
+      "공통 UI 재사용"
+    ],
+    "rules": [],
+    "dos": [
+      "공통 토큰과 컴포넌트를 먼저 사용한다."
+    ],
+    "donts": [
+      "수락 전 신원을 공개하지 않는다."
+    ]
+  }
+}
