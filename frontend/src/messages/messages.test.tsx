@@ -10,13 +10,13 @@ type Call = { method: string; path: string; body: unknown; key: string | null }
 type Reply = { status?: number; data?: unknown; error?: { code: string; message: string } }
 
 /** Stubs the API: auth endpoints log in employee A, other paths go to route. */
-function server(route: (call: Call) => Reply) {
+function server(route: (call: Call) => Reply, userId = 'dev-employee-a') {
   const calls: Call[] = []
   vi.stubGlobal('fetch', vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
     const path = String(input).replace('/api/v1', '')
     const meta = { hasUnreadMessages: false, hasUnreadNotifications: false }
     if (path === '/auth/config') return Response.json({ data: { authMode: 'development', developmentLogin: true, accounts: [] } })
-    if (path === '/auth/me') return Response.json({ data: { user: { id: 'dev-employee-a', realName: '테스트 직원 A', department: 'TEST_DEPT', jobLevel: 'TEST_LEVEL', role: 'MEMBER', status: 'ACTIVE' }, csrfToken: 'csrf' }, meta })
+    if (path === '/auth/me') return Response.json({ data: { user: { id: userId, realName: '테스트 직원 A', department: 'TEST_DEPT', jobLevel: 'TEST_LEVEL', role: 'MEMBER', status: 'ACTIVE' }, csrfToken: 'csrf' }, meta })
     const call = { method: init?.method ?? 'GET', path, body: init?.body ? JSON.parse(String(init.body)) : undefined, key: new Headers(init?.headers).get('Idempotency-Key') }
     calls.push(call)
     const reply = route(call)
@@ -160,7 +160,7 @@ test('세션이 만료되어도 작성한 내용과 키를 보관했다가 다�
   mount(<ConversationView conversationId="c1" />)
   expect(((await screen.findByLabelText('쪽지 내용')) as HTMLTextAreaElement).value).toBe('보관할 문의')
   const key = calls.find(c => c.method === 'POST')?.key
-  expect(JSON.parse(sessionStorage.getItem('kch-relay:message-draft:c1')!).key).toBe(key)
+  expect(JSON.parse(sessionStorage.getItem('kch-relay:message-draft:dev-employee-a:c1')!).key).toBe(key)
 })
 
 test('서버 검증 오류 문구를 그대로 보여준다', async () => {
@@ -169,4 +169,16 @@ test('서버 검증 오류 문구를 그대로 보여준다', async () => {
   fireEvent.change(await screen.findByLabelText('쪽지 내용'), { target: { value: '내용' } })
   fireEvent.click(screen.getByRole('button', { name: '보내기' }))
   expect((await screen.findByRole('alert')).textContent).toBe('쪽지 내용을 입력해 주세요.')
+})
+
+test('같은 대화라도 다른 계정에서는 이전 작성자의 초안을 보지 않는다',async()=>{
+ server(()=>page([]))
+ const first=mount(<ConversationView conversationId="c1" />)
+ await screen.findByText(/아직 쪽지가 없습니다/)
+ fireEvent.change(screen.getByLabelText('쪽지 내용'),{target:{value:'A 계정만 볼 초안'}})
+ first.unmount()
+ server(()=>page([]),'dev-employee-b')
+ mount(<ConversationView conversationId="c1" />)
+ await screen.findByText(/아직 쪽지가 없습니다/)
+ expect((screen.getByLabelText('쪽지 내용') as HTMLTextAreaElement).value).toBe('')
 })

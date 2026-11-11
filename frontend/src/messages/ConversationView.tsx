@@ -1,3 +1,5 @@
+import { Button } from "@/components/ui/button"
+import { Textarea } from "@/components/ui/textarea"
 import { useEffect, useRef, useState, type FormEvent } from 'react'
 import { useSession } from '../auth/session'
 import { APIError } from '../lib/api'
@@ -25,13 +27,14 @@ function saveDraft(id: string, draft: Draft | null) {
 
 /** One conversation. Loaded on entry and on refresh; received messages are marked read only after they are shown. */
 export function ConversationView({ conversationId }: { conversationId: string }) {
-  const { api } = useSession()
+  const { api, state } = useSession()
+  const storageId = `${state.status === "authenticated" ? state.user.id : "anonymous"}:${conversationId}`
   const [header, setHeader] = useState<MessagePage['conversation'] | null>(null)
   const [items, setItems] = useState<Message[]>([]) // oldest first
   const [older, setOlder] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
-  const [draft, setDraft] = useState<Draft>(() => loadDraft(conversationId))
+  const [draft, setDraft] = useState<Draft>(() => loadDraft(storageId))
   const [sending, setSending] = useState(false)
   const [sendError, setSendError] = useState<string | null>(null)
   const readThrough = useRef<string | null>(null)
@@ -57,8 +60,9 @@ export function ConversationView({ conversationId }: { conversationId: string })
   }, [items])
 
   function edit(body: string) {
-    const next = { ...draft, body }
-    setDraft(next); saveDraft(conversationId, next)
+    const next = { ...draft, body, ...(sendError ? {key:newKey()}: {}) }
+    setSendError(null)
+    setDraft(next); saveDraft(storageId, next)
   }
   const length = codePointLength(draft.body)
   const blank = draft.body.trim() === ''
@@ -72,17 +76,17 @@ export function ConversationView({ conversationId }: { conversationId: string })
       const sent = await api<Message>(`/conversations/${conversationId}/messages`, { method: 'POST', body: { body: draft.body }, headers: { 'Idempotency-Key': draft.key } })
       setItems(previous => previous.some(m => m.id === sent.id) ? previous : [...previous, sent])
       const fresh = { body: '', key: newKey() }
-      setDraft(fresh); saveDraft(conversationId, null)
+      setDraft(fresh); saveDraft(storageId, null)
     } catch (e) {
       setSendError(e instanceof APIError && e.status === 401 ? '세션이 만료되었습니다. 다시 로그인해 주세요. 작성한 내용은 보관됩니다.' : describe(e))
     } finally { setSending(false) }
   }
 
   return <section aria-labelledby="conversation" className="conversation">
-    <h2 id="conversation">{header ? `${header.product.title} · ${describeCounterparty(header.counterparty)}` : '쪽지'}</h2>
-    <p><a href="/messages">대화 목록</a> · <button type="button" disabled={loading} onClick={() => void load()}>새로고침</button></p>
+    <h1 id="conversation">{header ? `${header.product.title} · ${describeCounterparty(header.counterparty)}` : '쪽지'}</h1>
+    <p><a href="/messages">대화 목록</a> · <Button type="button" disabled={loading} onClick={() => void load()}>새로고침</Button></p>
     {error ? <p role="alert">{error}</p> : null}
-    {older ? <button type="button" disabled={loading} onClick={() => void load(older)}>이전 쪽지 더 보기</button> : null}
+    {older ? <Button type="button" disabled={loading} onClick={() => void load(older)}>이전 쪽지 더 보기</Button> : null}
     {header && items.length === 0 ? <p>아직 쪽지가 없습니다. 첫 쪽지를 보내 보세요.</p> : null}
     <ol className="messages">{items.map(m => <li key={m.id} className={m.sender.kind === 'SELF' ? 'mine' : 'theirs'}>
       <strong>{m.sender.kind === 'SELF' ? m.sender.label : describeCounterparty(m.sender)}</strong>
@@ -90,11 +94,11 @@ export function ConversationView({ conversationId }: { conversationId: string })
       <small>{when(m.createdAt)}{m.sender.kind === 'SELF' ? ` · ${m.readAt ? '읽음' : '안 읽음'}` : ''}</small>
     </li>)}</ol>
     <form onSubmit={submit}>
-      <label>쪽지 내용<textarea value={draft.body} onChange={e => edit(e.target.value)} rows={4} /></label>
+      <label>쪽지 내용<Textarea disabled={sending} value={draft.body} onChange={e => edit(e.target.value)} rows={4} /></label>
       <p className={length > MAX_MESSAGE_LENGTH * 0.95 ? 'counter near-limit' : 'counter'} aria-live="polite">{length.toLocaleString('ko-KR')} / {MAX_MESSAGE_LENGTH.toLocaleString('ko-KR')}</p>
       {tooLong ? <p role="alert">쪽지는 {MAX_MESSAGE_LENGTH.toLocaleString('ko-KR')}자까지 보낼 수 있습니다.</p> : null}
       {sendError ? <p role="alert">{sendError}</p> : null}
-      <button type="submit" disabled={sending || blank || tooLong}>{sendError ? '다시 보내기' : '보내기'}</button>
+      <Button type="submit" disabled={sending || blank || tooLong}>{sendError ? '다시 보내기' : '보내기'}</Button>
     </form>
   </section>
 }

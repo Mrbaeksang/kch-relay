@@ -1,3 +1,5 @@
+import { Button } from "@/components/ui/button"
+import { Textarea } from "@/components/ui/textarea"
 import { useState } from 'react'
 import { useSession } from '../auth/session'
 import { describe } from '../transactions/model'
@@ -15,7 +17,7 @@ export function InquiryButton({ productId }: { productId: string }) {
     } catch (e) { setError(describe(e)); setBusy(false) }
   }
   return <div className="inquiry">
-    <button type="button" disabled={busy} onClick={() => void start()}>익명으로 문의하기</button>
+    <Button type="button" disabled={busy} onClick={() => void start()}>익명으로 문의하기</Button>
     {error ? <p role="alert">{error}</p> : null}
   </div>
 }

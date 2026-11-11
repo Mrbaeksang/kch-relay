@@ -1,3 +1,5 @@
+import { Button } from "@/components/ui/button"
+import { Textarea } from "@/components/ui/textarea"
 import { useEffect, useState } from 'react'
 import { useSession } from '../auth/session'
 import { describe, when } from '../transactions/model'
@@ -18,8 +20,8 @@ export function ConversationList() {
   }
   useEffect(() => { void load() }, [])
   return <section aria-labelledby="conversations" className="conversations">
-    <h2 id="conversations">쪽지</h2>
-    <button type="button" disabled={busy} onClick={() => void load()}>새로고침</button>
+    <h1 id="conversations">쪽지</h1>
+    <Button type="button" disabled={busy} onClick={() => void load()}>새로고침</Button>
     {error ? <p role="alert">{error}</p> : null}
     {page && page.items.length === 0 ? <p>주고받은 쪽지가 없습니다.</p> : null}
     <ul>{page?.items.map(c => <li key={c.conversationId}>
@@ -27,6 +29,6 @@ export function ConversationList() {
       {c.hasUnread ? <strong> · 새 쪽지</strong> : null}
       {c.lastMessage ? <p className="message-preview">{c.lastMessage.fromSelf ? '나: ' : ''}{c.lastMessage.body} <small>{when(c.lastMessage.createdAt)}</small></p> : <p className="message-preview">아직 보낸 쪽지가 없습니다.</p>}
     </li>)}</ul>
-    {page?.nextCursor ? <button type="button" disabled={busy} onClick={() => void load(page.nextCursor!)}>더 보기</button> : null}
+    {page?.nextCursor ? <Button type="button" disabled={busy} onClick={() => void load(page.nextCursor!)}>더 보기</Button> : null}
   </section>
 }
