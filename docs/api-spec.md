@@ -179,6 +179,8 @@ email·googleSubject는 인증 결과에서 얻는다. role·status는 서버 �
 
 수락 전 합의 필드·totalPrice·acceptedAt은 null, counterparty.identity도 null이다. 상품 현재 정보와 거래 확정 단가·수량은 구분한다. **제안:** 같은 상품에서 이미 신원을 공개한 두 사람은 이후 대화·재신청에서도 공개 상태를 유지한다.
 
+2026-11-11 구현(#18): 거래 응답은 위 필드에 더해 viewerRole(BUYER/SELLER), product(id·title·현재 unitPrice·remainingQuantity·recruitmentClosed·hidden), completedAt·rejectedAt·withdrawnAt, 현재 사용자가 할 수 있는 actions(updateQuantity·withdraw·accept·reject·complete)를 준다. 판매자의 `GET /products/{productId}/deals`는 items·nextCursor와 함께 관리용 product(approvalStatus·hidden·imageIds·pendingApplicationCount 포함)를 준다. 상품 관리 API는 같은 관리용 product를 반환한다. 미정 정책의 선택과 입력 상한은 [기능 3 결정 기록](decisions/market-transactions.md)을 따른다.
+
 신청 생성·쪽지 발송에는 `Idempotency-Key`를 제안한다. 사용자·경로·키 기준 최초 요청 해시·결과를 저장하고 같은 키의 다른 본문은 409다. 그래야 완료·철회 직후 지연된 네트워크 재시도가 새 신청을 만들지 않는다. 저장소·키 보관 기간은 미정이다.
 
 ## 5. 쪽지
