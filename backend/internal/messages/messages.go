@@ -203,3 +203,45 @@ func (s *Service) listMessages(r *http.Request) (httpx.Result, error) {
 	}
 	return httpx.Result{Data: map[string]any{"items": items, "nextCursor": next}}, nil
 }
+
+var errForeignMessage = httpx.Invalid("읽음 기준 쪽지가 이 대화에 없습니다.")
+
+// markRead marks the viewer's received messages read up to and including the
+// given message (by time, then ID). Messages that arrive later stay unread
+// even when the request races with them.
+func (s *Service) markRead(r *http.Request) (httpx.Result, error) {
+	user := actor(r).ID
+	var in struct {
+		ThroughMessageID string `json:"throughMessageId"`
+	}
+	if err := httpx.DecodeJSON(r, &in); err != nil {
+		return httpx.Result{}, err
+	}
+	var updated int64
+	err := s.write(r.Context(), func(tx *sql.Tx, now time.Time) error {
+		ctx := r.Context()
+		c, err := loadConversation(ctx, tx, chi.URLParam(r, "conversationId"), user)
+		if err != nil {
+			return err
+		}
+		var throughAt string
+		err = tx.QueryRowContext(ctx, "SELECT created_at FROM messages WHERE id=? AND participant_id=?", in.ThroughMessageID, c.ID).Scan(&throughAt)
+		if errors.Is(err, sql.ErrNoRows) {
+			return errForeignMessage
+		}
+		if err != nil {
+			return err
+		}
+		res, err := tx.ExecContext(ctx, `UPDATE messages SET read_at=? WHERE participant_id=? AND recipient_id=? AND read_at IS NULL
+ AND (created_at<? OR (created_at=? AND id<=?))`, database.Timestamp(now), c.ID, user, throughAt, throughAt, in.ThroughMessageID)
+		if err != nil {
+			return err
+		}
+		updated, err = res.RowsAffected()
+		return err
+	})
+	if err != nil {
+		return httpx.Result{}, err
+	}
+	return httpx.Result{Data: map[string]int64{"updatedCount": updated}}, nil
+}

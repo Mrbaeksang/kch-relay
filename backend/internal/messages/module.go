@@ -37,6 +37,7 @@ func (s *Service) register(r chi.Router) {
 	r.Get("/me/conversations", h(s.myConversations))
 	r.Get("/conversations/{conversationId}/messages", h(s.listMessages))
 	r.Post("/conversations/{conversationId}/messages", h(s.sendMessage))
+	r.Post("/conversations/{conversationId}/read", h(s.markRead))
 }
 
 // write runs fn in one transaction with the request time.
