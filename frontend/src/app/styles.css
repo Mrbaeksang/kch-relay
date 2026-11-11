@@ -76,7 +76,7 @@
 }
 @layer base {
   * { box-sizing: border-box; border-color: var(--border); }
-  body { margin: 0; background: var(--background); color: var(--foreground); font-family: var(--font-ui); font-size: 16px; line-height: 1.6; overflow-wrap: anywhere; }
+  body { margin: 0; background: var(--background); color: var(--foreground); font-family: var(--font-ui); font-size: 16px; line-height: 1.6; letter-spacing: -0.01em; word-break: keep-all; overflow-wrap: anywhere; }
   button, input, textarea, select { font: inherit; }
   button:not(:disabled), [role="button"]:not([aria-disabled="true"]) { cursor: pointer; }
   button:disabled { cursor: not-allowed; }
@@ -161,6 +161,35 @@
 .statistics dl { display:flex; flex-wrap:wrap; gap:24px 48px; margin-top:24px; }
 .statistics dt { color:var(--muted-foreground); font-size:14px; }
 .statistics dd { margin-top:8px; font-size:28px; font-weight:600; font-variant-numeric:tabular-nums; }
+}
+
+/* Shared reading rhythm for operational forms and transaction screens. */
+@layer components {
+  .products-page > h1, .product-manage > h1, .deal-detail > h1, .my-deals > h1 { margin-bottom: 12px; }
+  .products-page > p, .product-manage > p, .deal-detail > p { margin-block: 12px; }
+  .products-page > section { margin-block: 24px; }
+  .product-list article > * + * { margin-top: 12px; }
+  .product-manage > h2, .product-manage > section { margin-top: 32px; }
+  .product-manage h2, .deal-detail h2 { margin-bottom: 16px; }
+  .description, .product-form p, .apply-form p, .review-detail p { line-height: 1.75; }
+  .deal-filter { display: flex; align-items: center; gap: 12px; margin-block: 24px; font-size: 14px; }
+  .my-deals select { min-width: 144px; background: var(--background); padding: 10px 36px 10px 12px; }
+  .deal-empty { display: flex; flex-direction: column; align-items: flex-start; gap: 16px; padding: 32px 24px; border: 1px solid var(--border); border-radius: var(--radius-lg); }
+  .deal-empty h2 { font-size: 20px; line-height: 1.5; }
+  .deal-empty p { color: var(--muted-foreground); line-height: 1.75; }
+  .deal-empty a { text-decoration: none; }
+  .my-deals > ul { margin-top: 24px; }
+  .deal-detail nav { margin-top: 32px; }
+  .deal-summary { grid-template-columns: minmax(80px,auto) minmax(0,1fr); line-height: 1.75; }
+  .product-form, .apply-form { gap: 16px; }
+  .photos { display: flex; flex-wrap: wrap; gap: 12px; }
+  .photo-list img, .photos img { object-fit: contain; background: var(--muted); }
+  @media(max-width:639px) {
+    .product-manage,.deal-detail,.my-deals,.products-page { padding-block: 24px; }
+    .deal-empty { padding: 24px 20px; }
+    .deal-empty h2 { font-size: 18px; }
+    .deal-summary { gap: 10px 16px; }
+  }
 }
 
 @layer components {

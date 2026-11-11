@@ -10,6 +10,7 @@ import (
 
 type Config struct {
 	AppEnv, AuthMode, Port, DatabasePath, UploadDir, WebDir, AppOrigin string
+	GoogleClientID, GoogleClientSecret, GoogleRedirectURI              string
 	SessionTTL                                                         time.Duration
 }
 
@@ -24,8 +25,8 @@ func LoadConfig() (Config, error) {
 	if c.AppEnv != "development" && c.AppEnv != "production" {
 		return c, fmt.Errorf("APP_ENV must be development or production")
 	}
-	if c.AuthMode != "disabled" && c.AuthMode != "development" {
-		return c, fmt.Errorf("AUTH_MODE is unsupported; Google authentication is not implemented")
+	if c.AuthMode != "disabled" && c.AuthMode != "development" && c.AuthMode != "google" {
+		return c, fmt.Errorf("AUTH_MODE is unsupported")
 	}
 	if c.AppEnv == "production" && c.AuthMode == "development" {
 		return c, fmt.Errorf("development authentication is forbidden in production")
@@ -48,6 +49,13 @@ func LoadConfig() (Config, error) {
 		if err != nil || u.Host == "" || u.User != nil || u.Path != "" || u.RawQuery != "" || u.Fragment != "" || (u.Scheme != "http" && u.Scheme != "https") || (c.AppEnv == "production" && u.Scheme != "https") {
 			return c, fmt.Errorf("APP_ORIGIN must be an origin, with HTTPS in production")
 		}
+	}
+
+	c.GoogleClientID = get("GOOGLE_CLIENT_ID", "")
+	c.GoogleClientSecret = get("GOOGLE_CLIENT_SECRET", "")
+	c.GoogleRedirectURI = get("GOOGLE_REDIRECT_URI", "")
+	if c.AuthMode == "google" && (c.GoogleClientID == "" || c.GoogleClientSecret == "" || c.AppOrigin == "" || c.GoogleRedirectURI != c.AppOrigin+"/api/v1/auth/google/callback") {
+		return c, fmt.Errorf("Google credentials and matching GOOGLE_REDIRECT_URI / APP_ORIGIN are required")
 	}
 	return c, nil
 }

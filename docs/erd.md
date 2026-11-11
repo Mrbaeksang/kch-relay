@@ -210,3 +210,14 @@ erDiagram
 수량 조정은 대기 신청을 거절하지 않는다. 조정 후 수량이 기존 신청보다 적어도 신청은 유지하며 수락 단계에서 차단한다.
 
 SQLite 단일 프로세스·짧은 트랜잭션으로 구현한다. 위 상품 잠금은 논리적 직렬화 요구사항이며 SQLite에 SELECT FOR UPDATE를 사용하지 않는다. 쓰기 트랜잭션과 조건부 UPDATE·제약으로 수락·수정·신청 경합을 처리한다. [기술 스택](tech-stack.md)을 따른다.
+
+
+## 가입 승인 확장 (#31)
+
+- departments(id PK, name UNIQUE, is_hr). 최초 `hr / 인사팀` 하나이며 is_hr=1은 최대 하나, 관리자 부서 삭제 금지.
+- users.department_id → departments.id, nullable(기존 개발 fixture 호환). 표시용 department는 부서 이름 변경과 같은 트랜잭션으로 동기화한다.
+- users.membership_status: PROFILE_REQUIRED / PENDING / ACTIVE / REJECTED. 기존 계정은 ACTIVE, Google 신규 계정은 PROFILE_REQUIRED. 기존 status(ACTIVE/SUSPENDED)는 이용 정지를 독립 관리한다.
+- users.reviewed_at, reviewed_by → users.id: 가입 심사 시각·담당자. 최초 운영 승인만 reviewed_by=NULL이다.
+- oauth_flows(state_hash PK, binding_hash, nonce, verifier, expires_at): 10분 만료·일회용 로그인 흐름. Google 액세스/리프레시/ID 토큰은 저장하지 않는다.
+
+가입 소속 선택은 승인 전 관리자 권한을 부여하지 않는다. 승인 시 해당 부서의 is_hr가 참일 때만 HR_ADMIN을 부여한다.

@@ -1,11 +1,11 @@
 import { createContext, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import { APIError, createAPI, type API, type Meta } from '../lib/api'
 
-export type User = { id: string; realName: string; department: string; jobLevel: string; role: 'MEMBER' | 'HR_ADMIN'; status: 'ACTIVE' | 'SUSPENDED' }
+export type User = { id: string; realName: string; department: string; jobLevel: string; role: 'MEMBER' | 'HR_ADMIN'; status: 'ACTIVE' | 'SUSPENDED' | 'PROFILE_REQUIRED' | 'PENDING' | 'REJECTED' }
 type SessionData = { user: User; csrfToken: string }
 type AuthState = { status: 'loading' } | { status: 'anonymous' } | ({ status: 'authenticated' } & SessionData)
-type AuthConfig = { authMode: string; developmentLogin: boolean; accounts: { key: string; label: string; role: string }[] }
-type SessionValue = { state: AuthState; config: AuthConfig | null; meta: Meta; error: string | null; busy: boolean; api: API; login: (key: string) => Promise<void>; logout: () => Promise<void> }
+type AuthConfig = { authMode: string; developmentLogin: boolean; googleLogin?: boolean; accounts: { key: string; label: string; role: string }[] }
+type SessionValue = { state: AuthState; config: AuthConfig | null; meta: Meta; error: string | null; busy: boolean; api: API; login: (key: string) => Promise<void>; logout: () => Promise<void>; refresh: () => Promise<void> }
 const Context = createContext<SessionValue | null>(null)
 const noUnread: Meta = { hasUnreadMessages: false, hasUnreadNotifications: false }
 
@@ -41,6 +41,7 @@ export function SessionProvider({ children }: { children: ReactNode }) {
     })
     return () => controller.abort()
   }, [api])
+  async function refresh() { accept(await api<SessionData>('/auth/me')) }
   async function login(key: string) {
     setBusy(true); setError(null)
     try { accept(await api<SessionData>('/auth/development-login', { method: 'POST', body: { accountKey: key } })) }
@@ -53,13 +54,14 @@ export function SessionProvider({ children }: { children: ReactNode }) {
     catch (error) { if (!(error instanceof APIError && error.status === 401)) setError(describe(error)) }
     finally { setBusy(false) }
   }
-  return <Context.Provider value={{ state, config, meta, error, busy, api, login, logout }}>{children}</Context.Provider>
+  return <Context.Provider value={{ state, config, meta, error, busy, api, login, logout, refresh }}>{children}</Context.Provider>
 }
 export function useSession() { const session = useContext(Context); if (!session) throw new Error('SessionProvider가 필요합니다.'); return session }
 export function RequireRole({ role, children }: { role?: User['role']; children: ReactNode }) {
   const { state } = useSession()
   if (state.status === 'loading') return <p>로그인 상태를 확인하고 있습니다.</p>
   if (state.status === 'anonymous') return <p role="alert">로그인이 필요합니다.</p>
+  if (state.user.status !== 'ACTIVE') return <p role="alert">가입 승인이 필요합니다.</p>
   if (role && state.user.role !== role) return <p role="alert">관리자만 이용할 수 있습니다.</p>
   return <>{children}</>
 }

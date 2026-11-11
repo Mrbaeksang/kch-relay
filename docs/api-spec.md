@@ -299,3 +299,31 @@ APPLICATION_REJECTED 알림은 id·dealId·productId·createdAt·readAt을 반�
 ## 9. 구현 전 확정 사항
 
 OpenAPI·DB 마이그레이션 작성 전 도메인·enum 값, 필드 길이·최댓값, 세션 회수, 개인정보 수정·보관, 이미지 제한, 멱등성 보관 정책 및 PRD의 제안 사항을 확정한다.
+
+
+## 구글 가입·승인·부서 관리 (이슈 #31)
+
+운영 `AUTH_MODE=google`에서 구글 authorization code + PKCE를 사용한다. 콜백에서 서명·issuer·audience·만료·nonce·email_verified를 검증하며, state는 브라우저 HttpOnly 쿠키에 결합하고 DB에서 10분 만료·일회 사용한다. 메일 도메인 제한은 두지 않고 인사팀의 가입 승인으로 이용을 통제한다. Google 토큰은 저장하지 않는다. 검증된 subject로 사용자를 식별하며 이메일만으로 기존 계정을 연결하지 않는다.
+
+| 메서드 | 경로 (기본 `/api/v1`) | 계약 |
+| --- | --- | --- |
+| GET | `/auth/google/start` | Google 로그인으로 302, state/nonce/PKCE 생성 |
+| GET | `/auth/google/callback` | 세션 쿠키 후 앱 origin으로 303, 실패 시 `/?loginError=google` |
+| GET | `/auth/me` | 검증된 세션의 user·csrfToken. 미가입도 본인 상태만 조회 가능 |
+| GET | `/auth/departments` | 로그인한 세션에 `{departments:[{id,name,isHR}],jobLevels:string[]}` |
+| POST | `/auth/register` | `{realName,departmentId,jobLevel}` → `{status:PENDING}`. PROFILE_REQUIRED만 가능, 중복409 |
+| GET | `/admin/members` | 활성 HR_ADMIN만 `{members:[{id,realName,email,department,jobLevel,role,status,createdAt}]}` |
+| POST | `/admin/members/{id}/approve` | PENDING만 승인. HR 부서는 HR_ADMIN, 나머지 MEMBER |
+| POST | `/admin/members/{id}/reject` | PENDING만 REJECTED로 반려 |
+| POST | `/admin/members/{id}/suspend` | 승인된 타인 계정을 정지 |
+| POST | `/admin/members/{id}/restore` | 승인된 타인 계정 정지 해제 |
+| GET | `/admin/departments` | 부서·직급 목록, 관리자 전용 |
+| POST | `/admin/departments` | `{name}` →201 `{id,name,isHR:false}` |
+| PATCH | `/admin/departments/{id}` | `{name}`. 해당 부서 구성원 표시명도 함께 갱신 |
+| DELETE | `/admin/departments/{id}` | 미사용 일반 부서만 삭제. 인사팀·사용 중이면409 |
+
+모든 변경은 Origin과 세션 CSRF 검사 대상이다. `PROFILE_REQUIRED → PENDING → ACTIVE 또는 REJECTED`이며 승인 전 상품·이미지·거래·통계·부서 관리에 접근할 수 없다. `/auth/me`의 user.status는 위 가입 상태 또는 SUSPENDED다. 반려 계정의 재신청·자가 소속 변경은 제공하지 않는다. 관리자는 본인 승인·반려·정지·해제를 수행할 수 없다. 인사팀 지정은 부서 이름이 아닌 고정 is_hr로 판단하며 이름 변경으로 관리자 부서를 만들 수 없다.
+
+### 장터의 본인 상품 표시 (#33)
+
+`GET /products`는 숨기지 않은 승인 상품과 본인이 등록한 승인 대기·반려 상품을 함께 반환한다. 승인 전 상품은 소유자에게만 보이며 검색·커서 조건을 동일하게 적용한다. DTO의 `isOwn`은 본인 상품 여부만 제공하고 전역 판매자 ID를 공개하지 않는다. `approvalStatus`는 PENDING / APPROVED / REJECTED이며 화면에 심사 상태를 표시한다. 본인 상품에는 신청 버튼 대신 상품 관리 경로를 제공한다. 다른 구성원에게 승인 전 상품을 노출하지 않는 원칙은 유지한다.

@@ -91,14 +91,15 @@ export function MyDeals() {
   useEffect(() => { void load();return()=>{requestID.current++} }, [status])
   return <section aria-labelledby="my-deals" className="my-deals">
     <h1 id="my-deals">내 신청·거래</h1>
-    <label>상태 <select value={status} onChange={e => setStatus(e.target.value as DealStatus | '')}>
+    <p className="mt-3 text-muted-foreground">신청한 상품과 진행 중인 거래를 확인하세요.</p>
+    <label className="deal-filter">상태 <select value={status} onChange={e => setStatus(e.target.value as DealStatus | '')}>
       <option value="">전체</option>
       {Object.entries(statusLabels).map(([value, label]) => <option key={value} value={value}>{label}</option>)}
     </select></label>
     {error ? <p role="alert">{error}</p> : null}
     {loading?<p role="status">거래를 불러오고 있습니다.</p>:null}
     {error?<Button type="button" variant="outline" onClick={()=>void load()}>다시 시도</Button>:null}
-    {!loading && page && page.items.length === 0 ? <p>신청한 거래가 없습니다.</p> : null}
+    {!loading && page && page.items.length === 0 ? <div className="deal-empty"><h2>아직 신청한 거래가 없습니다</h2><p>장터에서 원하는 상품을 찾아 거래를 신청해 보세요.</p><Button variant="outline" asChild><a href="/market">장터 둘러보기</a></Button></div> : null}
     <ul>{page?.items.map(deal => <li key={deal.id}>
       <a href={`/market/deals/${deal.id}`}>{deal.product.title}</a> · {statusLabels[deal.status]} · {deal.requestedQuantity}개
     </li>)}</ul>

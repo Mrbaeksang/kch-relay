@@ -11,11 +11,13 @@ COPY backend/go.mod backend/go.sum ./
 RUN go mod download
 COPY backend/ ./
 RUN CGO_ENABLED=0 go build -trimpath -ldflags="-s -w" -o /out/server ./cmd/server
+RUN CGO_ENABLED=0 go build -trimpath -ldflags="-s -w" -o /out/bootstrap-admin ./cmd/bootstrap-admin
 
 FROM debian:bookworm-slim
 RUN apt-get update && apt-get install -y --no-install-recommends ca-certificates gosu && rm -rf /var/lib/apt/lists/* && useradd --uid 10001 --create-home app && mkdir -p /data/uploads && chown -R app:app /data
 WORKDIR /app
 COPY --from=backend /out/server ./server
+COPY --from=backend /out/bootstrap-admin ./bootstrap-admin
 COPY --from=frontend /src/frontend/dist ./frontend/dist
 ENV APP_ENV=production AUTH_MODE=disabled PORT=8080 DATABASE_PATH=/data/market.db UPLOAD_DIR=/data/uploads WEB_DIR=/app/frontend/dist
 COPY scripts/entrypoint.sh /usr/local/bin/relay-entrypoint
