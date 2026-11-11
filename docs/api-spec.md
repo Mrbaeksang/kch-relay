@@ -237,6 +237,15 @@ email·googleSubject는 인증 결과에서 얻는다. role·status는 서버 �
 - 조회만으로 읽음 처리하지 않는다. 화면 표시 후 read 요청을 보낸다. throughMessageId는 해당 대화 메시지여야 하며 그 이후 도착한 메시지는 읽음 처리하지 않는다.
 - 진입·수동 새로고침 조회. 고정 폴링·웹소켓 없음. 기존 업무 요청의 meta로 미확인 표시 갱신.
 
+2026-11-11 구현(#19):
+
+- 대화 시작 응답은 `{conversationId}`. conversationId는 거래 응답의 conversationId(participant)와 같다. 판매자 본인 문의 400, 승인 전·숨김 상품의 새 대화 409 `INVALID_STATE`, 없는 상품 404.
+- 목록 항목: `conversationId`, `viewerRole`(BUYER/SELLER), `product{id,title}`, `counterparty{label,identity}`, `lastMessage{body(앞 100자),createdAt,fromSelf}|null`, `hasUnread`, 응답 `nextCursor`. 최근 쪽지 순. 판매자에게는 쪽지가 있는 대화만 보인다.
+- 메시지 조회 응답: `conversation`(목록 항목에서 lastMessage·hasUnread 제외), `items`(최신순 `id,body,createdAt,readAt,sender{kind,label,identity}`), `nextCursor`(더 오래된 쪽지). SELF 라벨은 ‘나’, readAt은 보낸 쪽지의 상대 읽음 여부를 보여준다.
+- 발송은 `Idempotency-Key` 헤더 **필수**. 같은 키·같은 본문 재요청 200(처음 쪽지), 다른 본문 409 `IDEMPOTENCY_KEY_REUSED`. 본문 1~2,000자, 초과 시 400 `details.maxLength`.
+- 읽음 응답은 `{updatedCount}`. throughMessageId가 이 대화의 쪽지가 아니면 400. 당사자가 아닌 사람의 모든 대화 요청은 404.
+- 미정 정책의 선택과 입력 상한은 [기능 4 결정 기록](decisions/anonymous-messages.md)을 따른다.
+
 ## 6. 알림 — 앱 내 알림함
 
 | Method | 경로 | 동작 |

@@ -1,3 +1,4 @@
+import { InquiryButton } from "@/messages/InquiryButton"
 import { ApplyForm } from "@/transactions/deals"
 import { useEffect, useState } from 'react'
 import { ArrowLeft, ArrowRight, Search, RefreshCw } from 'lucide-react'
@@ -382,6 +383,7 @@ export function ProductDetail({ productId }: { productId: string }) {
               </p>
             </div>
             {resource.data.isOwn ? <div className="mt-6 space-y-3"><Button asChild variant="outline"><a href={`/market/products/${encodeURIComponent(resource.data.id)}/manage`}>내 상품 관리</a></Button>{resource.data.approvalStatus !== 'APPROVED' ? <p className="text-sm text-muted-foreground">인사팀 승인 전에는 본인에게만 보입니다.</p> : null}</div> : null}
+            {!resource.data.isOwn && resource.data.approvalStatus === 'APPROVED' ? <InquiryButton productId={resource.data.id} /> : null}
             {resource.data.canApply ? <div className="mt-8"><ApplyForm productId={resource.data.id} /></div> : null}
               <div className="mt-8 rounded-lg bg-muted p-4 text-sm text-muted-foreground">
               <p>

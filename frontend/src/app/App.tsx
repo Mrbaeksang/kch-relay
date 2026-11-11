@@ -1,3 +1,4 @@
+import { messageRoute } from "../messages/routes"
 import { Onboarding } from '../auth/Onboarding'
 import { MemberAdmin, DepartmentAdmin } from '../auth/Administration'
 import { CompletedDealStatistics } from "../statistics/CompletedDealStatistics"
@@ -57,6 +58,7 @@ function Page() {
             <Button variant="ghost" asChild><a href="/me/products">내 상품</a></Button>
           <Button variant="ghost" asChild><a href="/market/deals">내 신청·거래</a></Button>
           <Button variant="ghost" asChild><a href="/notifications">알림함{session.meta.hasUnreadNotifications?<span aria-label="새 알림 있음" className="size-2 rounded-full bg-destructive"/>:null}</a></Button>
+          <Button variant="ghost" asChild><a href="/messages">쪽지{session.meta.hasUnreadMessages?<span aria-label="안 읽은 쪽지 있음" className="size-2 rounded-full bg-destructive"/>:null}</a></Button>
           {session.state.status === 'authenticated' &&
             session.state.user.role === 'HR_ADMIN' ? (
               <Button variant="ghost" asChild>
@@ -205,6 +207,8 @@ function DevelopmentSession() {
 // Future feature tickets add their screen entry points here; auth stays in the shared provider.
 function RouteSlot() {
   const path = window.location.pathname
+  const message = messageRoute(path)
+  if (message) return <RequireRole>{message}</RequireRole>
  if(path === "/admin/members") return <RequireRole role="HR_ADMIN"><MemberAdmin /></RequireRole>
  if(path === "/admin/departments") return <RequireRole role="HR_ADMIN"><DepartmentAdmin /></RequireRole>
   if (path === "/notifications") return <RequireRole><NotificationInbox /></RequireRole>

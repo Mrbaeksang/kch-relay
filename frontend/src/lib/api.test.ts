@@ -33,3 +33,14 @@ test('사진 업로드는 FormData를 그대로 보내고 브라우저가 multip
   expect(new Headers(options.headers).get('Content-Type')).toBeNull()
   expect(new Headers(options.headers).get('X-CSRF-Token')).toBe('csrf')
 })
+
+test('추가 헤더를 보내되 CSRF 값은 세션 값을 유지한다', async () => {
+  const transport = vi.fn(async () => Response.json({ data: { ok: true } }))
+  const api = createAPI({ getCSRF: () => 'csrf', onMeta: vi.fn(), onUnauthorized: vi.fn() }, transport)
+  await api('/conversations/c1/messages', { method: 'POST', body: { body: '안녕' }, headers: { 'Idempotency-Key': 'k1', 'X-CSRF-Token': 'evil' } })
+  const [, options] = transport.mock.calls[0] as unknown as [string, RequestInit]
+  const headers = new Headers(options.headers)
+  expect(headers.get('Idempotency-Key')).toBe('k1')
+  expect(headers.get('X-CSRF-Token')).toBe('csrf')
+  expect(headers.get('Content-Type')).toBe('application/json')
+})

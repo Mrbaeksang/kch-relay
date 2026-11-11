@@ -58,6 +58,6 @@ Go는 SIGTERM을 받으면 최대 10초 동안 요청을 정리한다. Railway�
 - [지원 리전](https://docs.railway.com/deployments/regions)
 
 
-### 마이그레이션과 PR #28
+### 익명 쪽지 마이그레이션
 
-가입 확장은 `00004_google_membership.sql`이다. 별도 열린 PR #28은 이 작업에서 변경·병합하지 않는다. 나중에 #28을 통합할 때 이미 배포된 마이그레이션보다 번호가 작아지지 않도록 해당 PR의 신규 00003 마이그레이션을 당시 최신 번호 다음으로 옮기고 업그레이드를 검사한다.
+익명 쪽지의 idempotency_key와 고유 인덱스는 `00005_message_idempotency.sql`로 추가한다. 기존 운영 가입 마이그레이션 00004 다음에 실행하며 과거 00003 번호를 운영 DB에 뒤늦게 추가하지 않는다. 기존 쪽지와 계정·상품·사진은 보존한다. 기존 쪽지는 idempotency_key=NULL로 유지된다.
